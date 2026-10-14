@@ -32,12 +32,6 @@
 
     var STATS_PATH = "google-scholar-stats/gs_data.json";
 
-    // jsDelivr 对 @分支 的地址会缓存大约 12 小时，而且**不按查询串区分缓存**
-    // （实测 ?v=xxx 和不带参数返回的是同一份旧文件），所以加 cache buster 没有用。
-    // 这里改成检测数据本身的时间戳：超过这个年龄就认为拿到的是旧缓存，再去 raw
-    // 取一份更新的。CDN 快（国内可访问），raw 新，两者互补。
-    var STALE_AFTER_MS = 12 * 60 * 60 * 1000;
-
     function fetchJson(baseUrl) {
         return fetch(baseUrl + STATS_PATH, { cache: "no-store" }).then(function (response) {
             if (!response.ok) { throw new Error("HTTP " + response.status); }
@@ -65,7 +59,7 @@
         var when = updatedAt(data);
         // 判断不出来时当作新鲜的，免得每次访问都多打一次请求。
         if (isNaN(when)) { return false; }
-        return (Date.now() - when) > STALE_AFTER_MS;
+        return (Date.now() - when) > 12 * 60 * 60 * 1000;
     }
 
     function newerOf(first, second) {
@@ -78,30 +72,33 @@
         return b > a ? second : first;
     }
 
+    var applied = null;
+
+    function useIfNewer(candidate) {
+        if (!candidate) { return; }
+        applied = newerOf(applied, candidate);
+        applyData(applied);
+    }
+
     function load() {
-        fetchJson(PRIMARY_BASE)
-            .then(function (primary) {
-                if (!isStale(primary)) {
-                    applyData(primary);
-                    return null;
-                }
-                // 主源是旧缓存：再问一次备用源，谁新用谁。
-                // raw 在国内可能不通，失败就继续用手上的数据，不影响页面。
-                return fetchJson(FALLBACK_BASE)
-                    .then(function (fresh) { applyData(newerOf(primary, fresh)); })
-                    .catch(function () { applyData(primary); });
-            })
-            .catch(function (error) {
-                return fetchJson(FALLBACK_BASE)
-                    .then(applyData)
-                    .catch(function () {
-                        // 两个源都拿不到（比如 Action 还没跑过第一次）时静默失败，
-                        // 页面保持占位符 "—"，其它内容不受影响。
-                        if (window.console && console.warn) {
-                            console.warn("[acad-homepage] 引用数据读取失败：", error.message);
-                        }
-                    });
+        // CDN 先来：它快，而且国内能访问，所以拿到就先画上去。然后再问一次 raw，
+        // 只有当它**确实更新**时才重画。
+        //
+        // 为什么不做「多久算陈旧」的判断：jsDelivr 对 @分支 的地址缓存约 12 小时，
+        // 而且不按查询串区分缓存（实测两个不同的 ?v= 返回同一份旧文件），所以加
+        // cache buster 没用；而固定阈值又会在「刚发布新数据但还没超过阈值」这段
+        // 窗口里显示旧数字。两个源都取、取更新的那份，就没有这个窗口了。
+        fetchJson(PRIMARY_BASE).then(useIfNewer, function () {
+            /* 主源不可用，下面还有一次机会 */
+        }).then(function () {
+            return fetchJson(FALLBACK_BASE).then(useIfNewer, function () {
+                /* 备用源也不可用 */
             });
+        }).then(function () {
+            if (!applied && window.console && console.warn) {
+                console.warn("[acad-homepage] 引用数据读取失败：CDN 与 raw 都没拿到");
+            }
+        });
     }
 
     function setText(el, text, title) {
