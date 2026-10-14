@@ -1,0 +1,110 @@
+{
+  "source": "google_scholar",
+  "name": "Ningfeng Que",
+  "citedby": 107,
+  "hindex": 5,
+  "i10index": 3,
+  "publications": {
+    "coins-net-a-continuous-position-aware-network-for-joint-medical-image-interpolat": {
+      "bib": {
+        "title": "CoInS-Net: A Continuous Position-Aware Network for Joint Medical Image Interpolation and Segmentation",
+        "pub_year": "2026",
+        "citation": "Y Sun, N Que, P Shi, R Fu, Y Yang, X Li, Y Dai",
+        "venue": "arXiv preprint arXiv:2608.09391, 2026"
+      },
+      "num_citations": 0
+    },
+    "statexdiff-cell-state-contextualized-multimodal-diffusion-for-single-cell-pertur": {
+      "bib": {
+        "title": "StateXDiff: Cell State-Contextualized Multimodal Diffusion for Single-Cell Perturbation Prediction",
+        "pub_year": "2026",
+        "citation": "Peiting Shi†, Ningfeng Que†, Xianzhe Huang, Xiaofei Wang Jianzhong Jeff Xi*",
+        "venue": "arXiv preprint arXiv:2605.16104, 2026"
+      },
+      "num_citations": 0
+    },
+    "advances-in-hydrogel-based-electronic-skins-from-material-design-to-multifunctio": {
+      "bib": {
+        "title": "Advances in hydrogel‐based electronic skins: From material design to multifunctional applications",
+        "pub_year": "2026",
+        "citation": "D Li, N Que, H Tang, Y Tian, C Jing, L Liu, G Liu, H Zhou, W Zhang, H Wei, ...",
+        "venue": "Advanced Functional Materials 36 (32), e27525, 2026"
+      },
+      "num_citations": 34
+    },
+    "histology-aware-graph-for-modeling-intercellular-communication-in-spatial-transc": {
+      "bib": {
+        "title": "Histology-Aware Graph for Modeling Intercellular Communication in Spatial Transcriptomics",
+        "pub_year": "2026",
+        "citation": "X Wang, C Tao, Y Jiang, Y Jiang, H Liu, Z Jiang, P Zhu, N Que, J Xi, ...",
+        "venue": "bioRxiv, 2026.01. 22.701166, 2026"
+      },
+      "num_citations": 0
+    },
+    "a-foundational-generative-model-for-cross-platform-unified-enhancement-of-spatia": {
+      "bib": {
+        "title": "A Foundational Generative Model for Cross-platform Unified Enhancement of Spatial Transcriptomics",
+        "pub_year": "2025",
+        "citation": "Xiaofei Wang†, Ningfeng Que†, Hanyu Liu†, Chenyang Tao, Yu Jiang, Yixuan ...",
+        "venue": "bioRxiv, 2025.12. 23.696267, 2025"
+      },
+      "num_citations": 1
+    },
+    "adaptive-spatial-transcriptomics-interpolation-via-cross-modal-cross-slice-model": {
+      "bib": {
+        "title": "Adaptive spatial transcriptomics interpolation via cross-modal cross-slice modeling",
+        "pub_year": "2025",
+        "citation": "Ningfeng Que†, Xiaofei Wang†,Jingjing Chen,Yixuan Jiang, Chao Li*",
+        "venue": "International Conference on Medical Image Computing and Computer-Assisted …, 2025"
+      },
+      "num_citations": 6
+    },
+    "mlar-unet-ldct-image-denoising-based-on-u-net-with-multiple-lightweight-attentio": {
+      "bib": {
+        "title": "MLAR-UNet: LDCT image denoising based on U-Net with multiple lightweight attention-based modules and residual reinforcement",
+        "pub_year": "2025",
+        "citation": "Hao Tang†, Ningfeng Que†,Yanwen,Tian, Mingzhe Li, Alessandro Perelli ...",
+        "venue": "Physics in Medicine & Biology 70 (4), 045021, 2025"
+      },
+      "num_citations": 5
+    },
+    "vtcnet-a-feature-fusion-dl-model-based-on-cnn-and-vit-for-the-classification-of-": {
+      "bib": {
+        "title": "Vtcnet: A feature fusion dl model based on cnn and vit for the classification of cervical cells",
+        "pub_year": "2024",
+        "citation": "Mingzhe Li †, Ningfeng Que†, Juanhua Zhang, Pingfang Du,Yin Dai*",
+        "venue": "International Journal of Imaging Systems and Technology 34 (5), e23161, 2024"
+      },
+      "num_citations": 17
+    },
+    "multi-scale-context-aware-networks-based-on-fragment-association-for-human-activ": {
+      "bib": {
+        "title": "Multi-scale Context-Aware Networks Based on Fragment Association for Human Activity Recognition.",
+        "pub_year": "2024",
+        "citation": "Z Wang, H Liu, B Zhao, Q Shen, M Li, N Que, M Yan, J Xin",
+        "venue": "IJCAI, 3169-3177, 2024"
+      },
+      "num_citations": 5
+    },
+    "destrans-a-medical-image-fusion-method-based-on-transformer-and-improved-densene": {
+      "bib": {
+        "title": "DesTrans: A medical image fusion method based on transformer and improved DenseNet",
+        "pub_year": "2024",
+        "citation": "Y Song, Y Dai, W Liu, Y Liu, X Liu, Q Yu, X Liu, N Que, M Li",
+        "venue": "Computers in biology and medicine 174, 108463, 2024"
+      },
+      "num_citations": 39
+    },
+    "oncorelay3d-foundation-model-assisted-reconstruction-of-3d-tumor-cell-expression": {
+      "bib": {
+        "title": "OncoRelay3D: Foundation-Model-Assisted Reconstruction of 3D Tumor Cell-Expression Fields for Mechanism-Aware Directed Cell-Cell Communication",
+        "pub_year": "",
+        "citation": "Z Li, Y Jiang, Z Liu, C Wu, N Que, C Li",
+        "venue": "MICCAI 2026 Workshop CMMCA, 0"
+      },
+      "num_citations": 0
+    }
+  },
+  "updated": "2026-10-14T18:26:27Z",
+  "updated_display": "2026-10-14 18:26:27 UTC"
+}
