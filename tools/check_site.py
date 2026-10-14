@@ -210,9 +210,14 @@ def test_publications_include_is_wired() -> None:
     include = load_text("_includes/publications.html")
     check("site.data.publications" in include, "模板读取 _data/publications.yml")
     check("data-title" in include, "模板渲染了引用数所需的 data-title")
+    check("data-title-alt" in include, "模板支持候选标题（预印本改名的情况）")
     check("paper-box" in include, "模板使用了左右布局的 paper-box")
     check("paper.authors_html" in include, "模板输出作者列表（不转义 HTML）")
     check("venue_full" in include, "模板输出期刊全称")
+
+    js = load_text("_includes/fetch_google_scholar_stats.html")
+    check("candidateTitles" in js, "引用脚本会尝试多个候选标题")
+    check("data-title-alt" in js, "引用脚本读取 data-title-alt")
 
     css = load_text("assets/css/main.scss")
     check(".author__urls li" in css and "white-space: normal" in css,

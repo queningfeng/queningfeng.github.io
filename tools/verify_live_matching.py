@@ -126,22 +126,30 @@ def main() -> int:
         return 2
 
     papers = (ROOT / "_data" / "publications.yml").read_text(encoding="utf-8")
-    titles = re.findall(r'^\s*title:\s*"([^"]+)"', papers, flags=re.MULTILINE)
+    blocks = re.split(r"^\s*-\s+group:", papers, flags=re.MULTILINE)[1:]
+
+    titles: list[str] = []
+    alt_titles: list[str] = []
+    pending: set[str] = set()
+    for block in blocks:
+        match = re.search(r'^\s*title:\s*"([^"]+)"', block, flags=re.MULTILINE)
+        if not match:
+            continue
+        title = match.group(1)
+        titles.append(title)
+        # A paper that was renamed between preprint versions keeps the old title
+        # here so the feed can still be matched; list items are the only `- "..."`
+        # entries inside a block, so this picks up exactly citation_titles.
+        alt_titles.append("|".join(re.findall(r'^\s*-\s+"([^"]+)"', block, flags=re.MULTILINE)))
+        if re.search(r"^\s*not_in_feed:\s*true", block, flags=re.MULTILINE):
+            pending.add(title)
+
     if not titles:
         print("no titles found in _data/publications.yml")
         return 2
 
-    # A paper can declare that the feed cannot know about it yet (a brand-new
-    # acceptance). Flag those separately instead of reporting a false failure.
-    pending = set()
-    for block in re.split(r"^\s*-\s+group:", papers, flags=re.MULTILINE)[1:]:
-        if re.search(r"^\s*not_in_feed:\s*true", block, flags=re.MULTILINE):
-            match = re.search(r'^\s*title:\s*"([^"]+)"', block, flags=re.MULTILINE)
-            if match:
-                pending.add(match.group(1))
-
     tc.INCLUDE = ROOT / "_includes" / "fetch_google_scholar_stats.html"
-    output = tc.run_apply_data(node, live, titles)
+    output = tc.run_apply_data(node, live, titles, alt_titles)
 
     print("\n" + "=" * 78)
     print(f"feed source : {live.get('source')}")
@@ -150,30 +158,33 @@ def main() -> int:
     print("=" * 78)
     print(f"#total_cit will render as: {output['total']!r}\n")
 
-    matched = 0
-    pending_seen = 0
-    for title, result in zip(titles, output["papers"]):
-        if result:
-            matched += 1
-        elif title in pending:
-            pending_seen += 1
-            print(f"  [--  ] {'(not indexed yet)':<20} {title[:58]}")
-            continue
-        flag = "OK  " if result else "MISS"
-        print(f"  [{flag}] {result or '(nothing shown)':<20} {title[:58]}")
+    matched = sum(1 for result in output["papers"] if result)
+    pending_seen = sum(
+        1 for title, result in zip(titles, output["papers"]) if not result and title in pending
+    )
+    unmatched = [
+        title
+        for title, result in zip(titles, output["papers"])
+        if not result and title not in pending
+    ]
 
-    expected = len(titles) - len(pending)
-    print(f"\nmatched {matched}/{expected} indexed papers"
-          + (f" ({pending_seen} not in the feed yet)" if pending_seen else ""))
-    if matched != expected:
-        print("\nUnmatched titles -- either the paper is absent from the feed, or")
-        print("the title in _data/publications.yml differs from what the source reports:")
-        for title, result in zip(titles, output["papers"]):
-            if not result and title not in pending:
-                print(f"  - {title}")
+    for title, result in zip(titles, output["papers"]):
+        if not result and title in pending:
+            print(f"  [--  ] {'(not indexed yet)':<20} {title[:58]}")
+        else:
+            flag = "OK  " if result else "MISS"
+            print(f"  [{flag}] {result or '(nothing shown)':<20} {title[:58]}")
+
+    print(f"\nmatched {matched}/{len(titles)} papers"
+          + (f" ({pending_seen} not expected in this feed)" if pending_seen else ""))
+    if unmatched:
+        print("\nUnmatched -- either the paper is absent from the feed, or the title")
+        print("in _data/publications.yml differs from what the source reports:")
+        for title in unmatched:
+            print(f"  - {title}")
         return 1
 
-    print("every indexed paper resolved to a citation count.")
+    print("every paper resolved to a citation count.")
     return 0
 
 

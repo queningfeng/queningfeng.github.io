@@ -110,6 +110,51 @@
         if (title) { el.setAttribute("title", title); }
     }
 
+    // 一篇论文的标题可能改过名——预印本升版时经常改——而 Google Scholar 往往还挂着
+    // 旧标题。所以除了 data-title，还允许用 data-title-alt 给出若干候选（用 | 分隔），
+    // 任意一个匹配上就算命中。
+    function candidateTitles(element) {
+        var titles = [];
+        var primary = element.getAttribute("data-title");
+        if (primary) { titles.push(primary); }
+        var alternatives = element.getAttribute("data-title-alt");
+        if (alternatives) {
+            alternatives.split("|").forEach(function (value) {
+                var trimmed = value.trim();
+                if (trimmed) { titles.push(trimmed); }
+            });
+        }
+        return titles;
+    }
+
+    function lookupCount(publicationMap, title) {
+        var normalized = normTitle(title);
+        if (!normalized) { return undefined; }
+        if (publicationMap[normalized] !== undefined) {
+            return publicationMap[normalized];
+        }
+
+        // 精确匹配失败时退一步做前缀匹配。两个方向都要试：
+        //   - 数据源标题更长：Google Scholar 上标题被截断成 "…"
+        //   - 数据源标题更短：数据源只登记了预印版的简称
+        // 太短的标题不参与，否则会误配。
+        var MIN_PREFIX = 32;
+        if (normalized.length < MIN_PREFIX) { return undefined; }
+        var pagePrefix = normalized.slice(0, 64);
+        var found;
+        Object.keys(publicationMap).some(function (key) {
+            if (key.length < MIN_PREFIX) { return false; }
+            var keyPrefix = key.slice(0, 64);
+            if (key.indexOf(pagePrefix) === 0 ||
+                normalized.indexOf(keyPrefix) === 0) {
+                found = publicationMap[key];
+                return true;
+            }
+            return false;
+        });
+        return found;
+    }
+
     function applyData(data) {
         var publicationMap = {};
         var publications = (data && data.publications) || {};
@@ -142,30 +187,11 @@
 
         var elements = document.getElementsByClassName("show_paper_citations");
         Array.prototype.forEach.call(elements, function (element) {
-            var normalized = normTitle(element.getAttribute("data-title"));
-            if (!normalized) { return; }
-            var count = publicationMap[normalized];
-
-            // 精确匹配失败时退一步做前缀匹配。两个方向都要试：
-            //   - 数据源标题更长：Google Scholar 上标题被截断成 "…"
-            //   - 数据源标题更短：OpenAlex 只登记了预印版的简称
-            // 太短的标题不参与，否则会误配。
-            if (count === undefined) {
-                var MIN_PREFIX = 32;
-                var pagePrefix = normalized.slice(0, 64);
-                Object.keys(publicationMap).some(function (key) {
-                    if (key.length < MIN_PREFIX || normalized.length < MIN_PREFIX) {
-                        return false;
-                    }
-                    var keyPrefix = key.slice(0, 64);
-                    if (key.indexOf(pagePrefix) === 0 ||
-                        normalized.indexOf(keyPrefix) === 0) {
-                        count = publicationMap[key];
-                        return true;
-                    }
-                    return false;
-                });
-            }
+            var count;
+            candidateTitles(element).some(function (title) {
+                count = lookupCount(publicationMap, title);
+                return count !== undefined;
+            });
 
             if (count !== undefined) {
                 element.textContent = "Cited by " + count;

@@ -24,7 +24,7 @@
   <div class="paper-box-text">
     <p class="pub-title">{% if paper.url and paper.url != "" %}<a href="{{ paper.url }}">{{ paper.title }}</a>{% else %}{{ paper.title }}{% endif %}</p>
     <p class="pub-authors">{{ paper.authors_html }}</p>
-    <p class="pub-meta"><strong>{{ paper.venue_full }}</strong>{% if paper.venue_extra %} &middot; {{ paper.venue_extra }}{% endif %} <span class="show_paper_citations" data-title="{{ paper.title | escape }}"></span>{% if paper.links %} {{ paper.links }}{% endif %}</p>
+    <p class="pub-meta"><strong>{{ paper.venue_full }}</strong>{% if paper.venue_extra %} &middot; {{ paper.venue_extra }}{% endif %} <span class="show_paper_citations" data-title="{{ paper.title | escape }}"{% if paper.citation_titles %} data-title-alt="{{ paper.citation_titles | join: '|' | escape }}"{% endif %}></span>{% if paper.links %} {{ paper.links }}{% endif %}</p>
     <p class="pub-note">{{ paper.note }}</p>
   </div>
 </div>

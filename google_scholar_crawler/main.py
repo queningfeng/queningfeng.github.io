@@ -278,6 +278,28 @@ def from_openalex() -> dict | None:
     }
 
 
+def published_payload_source() -> str | None:
+    """Which source produced the numbers currently on the site, if any.
+
+    Google Scholar and OpenAlex disagree a lot for a young profile (107 vs 69
+    citations at one point). Publishing an OpenAlex payload over an existing
+    Scholar one would silently *lower* every number on the page, so the crawler
+    checks first and refuses to do it.
+    """
+    repository = os.environ.get("GITHUB_REPOSITORY")
+    if not repository:
+        return None
+    try:
+        data = http_json(
+            f"https://raw.githubusercontent.com/{repository}"
+            "/google-scholar-stats/gs_data.json"
+        )
+    except Exception as exc:  # noqa: BLE001
+        log(f"  could not read the published payload: {type(exc).__name__}")
+        return None
+    return data.get("source")
+
+
 def main() -> int:
     log("collecting citation data")
     log("1/2 Google Scholar")
@@ -290,6 +312,16 @@ def main() -> int:
     if data is None:
         log("Both sources failed. Leaving previously published data untouched.")
         return 0
+
+    if data["source"] == "openalex":
+        previous = published_payload_source()
+        if previous == "google_scholar":
+            log(
+                "The published data came from Google Scholar and this run only "
+                "reached OpenAlex. Keeping the Scholar numbers rather than "
+                "downgrading them."
+            )
+            return 0
 
     # ISO 8601 so the page can Date.parse() it reliably when deciding whether the
     # CDN handed back a stale cache. updated_display is only for the tooltip.

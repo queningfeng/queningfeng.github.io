@@ -46,6 +46,10 @@
   authors_html: 'Xiaofei Wang<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Hanyu Liu<sup>†</sup>, Chen-Yang Tao, Yu Jiang, Yi-Xuan Jiang, Pinan Zhu, Jian-Guo Xu, Han Yan, Bing Ye, Stephen J. Price, Jianzhong Jeff Xi<sup>✉</sup>, Xinjie Wang<sup>✉</sup>, <strong>Chao Li</strong><sup>✉</sup>'
   note: "FOCUS — a multimodal generative foundation model for coordinated spatial transcriptomics enhancement."
   figure: "images/papers/focus.png"
+  # 这篇在 bioRxiv 升到 v3 时改了标题，但 Google Scholar 上还挂着旧标题。
+  # 这里列出旧标题，让引用数据仍能匹配上（页面上显示的仍是新标题）。
+  citation_titles:
+    - "A Foundational Generative Model for Cross-platform Unified Enhancement of Spatial Transcriptomics"
 
 - group: first
   badge: "arXiv 2026"
@@ -100,9 +104,6 @@
   venue_extra: "CMMCA Workshop"
   title: "OncoRelay3D: Foundation-Model-Assisted Reconstruction of 3D Tumor Cell-Expression Fields for Mechanism-Aware Directed Cell-Cell Communication"
   url: ""
-  # 你的 Google Scholar 已经收录了这篇；这里的标记指的是**我的兜底数据源 OpenAlex**
-  # 还没收录它。Google Scholar 抓取成功时会自动显示引用数，OpenAlex 收录后把这两行删掉。
-  not_in_feed: true
   authors_html: 'Zhitong Li, Yixuan Jiang, Ziming Liu, Chenjie Wu, <strong>Ningfeng Que</strong>, <strong>Chao Li</strong><sup>✉</sup>'
   note: "Reconstructs a continuous 3D tumour cell-expression field from H&E and ST sections, then infers mechanism-aware directed cell–cell communication on it."
   figure: "images/papers/oncorelay3d.png"
@@ -115,6 +116,9 @@
   authors_html: 'Xiaofei Wang<sup>†</sup>, Chenyang Tao<sup>†</sup>, Yu Jiang<sup>†</sup>, Yixuan Jiang, Hanyu Liu, Zheng Jiang, Pinan Zhu, <strong>Ningfeng Que</strong>, Jianzhong Xi, Stephen Price, Binzhi Qian<sup>✉</sup>, Jian-Guo Xu<sup>✉</sup>, <strong>Chao Li</strong><sup>✉</sup>'
   note: "HARMONIC — a histology-aware graph learning framework for anatomically contextualized cell–cell communication inference."
   figure: "images/papers/harmonic.png"
+  # 同样在 v3 改过名，Google Scholar 上仍是旧标题。
+  citation_titles:
+    - "Histology-Aware Graph for Modeling Intercellular Communication in Spatial Transcriptomics"
 
 - group: collaborative
   badge: "AFM 2026"

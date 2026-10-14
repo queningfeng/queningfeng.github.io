@@ -48,9 +48,10 @@ def check(condition: bool, label: str) -> None:
 # ---------------------------------------------------------------------------
 # 1. Titles really used on the homepage, extracted from about.md
 # ---------------------------------------------------------------------------
-def titles_from_about() -> list[str]:
-    text = ABOUT.read_text(encoding="utf-8")
-    return re.findall(r'data-title="([^"]+)"', text)
+def titles_from_data() -> list[str]:
+    """The paper titles the page will render, straight from the data file."""
+    text = (ROOT / "_data" / "publications.yml").read_text(encoding="utf-8")
+    return re.findall(r'^\s*title:\s*"([^"]+)"', text, flags=re.MULTILINE)
 
 
 def find_node() -> str | None:
@@ -101,8 +102,8 @@ def js_normalise(node: str, titles: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 def test_normalisers_agree() -> None:
     print("\n[1] Python and JavaScript title normalisers agree")
-    titles = titles_from_about()
-    check(len(titles) == 10, f"about.md declares 10 papers (found {len(titles)})")
+    titles = titles_from_data()
+    check(len(titles) == 11, f"_data/publications.yml declares 11 papers (found {len(titles)})")
 
     node = find_node()
     if node is None:
@@ -342,17 +343,24 @@ def extract_js_apply_block() -> str:
     return region
 
 
-def run_apply_data(node: str, fixture: dict, titles: list[str]) -> dict:
-    """Execute the production applyData() against a stubbed DOM."""
+def run_apply_data(
+    node: str, fixture: dict, titles: list[str], alt_titles: list[str] | None = None
+) -> dict:
+    """Execute the production applyData() against a stubbed DOM.
+
+    `alt_titles` mirrors the `data-title-alt` attribute (candidate titles for a
+    paper that was renamed between preprint versions).
+    """
     script = """
 const totalEl = { _t: "", set textContent(v) { this._t = String(v); },
                   get textContent() { return this._t; },
                   setAttribute() {} };
-const citationEls = TITLES.map((t) => ({
-    _t: "", "data-title": t,
+const ALTS = __ALT_TITLES__;
+const citationEls = __TITLES__.map((t, i) => ({
+    _t: "", "data-title": t, "data-title-alt": ALTS[i] || null,
     set textContent(v) { this._t = String(v); },
     get textContent() { return this._t; },
-    getAttribute(k) { return this[k]; },
+    getAttribute(k) { const v = this[k]; return v === undefined ? null : v; },
     setAttribute(k, v) { this[k] = String(v); },
 }));
 globalThis.document = {
@@ -360,18 +368,21 @@ globalThis.document = {
     getElementsByClassName: (cls) => (cls === "show_paper_citations" ? citationEls : []),
 };
 
-APPLY_BLOCK
+__APPLY_BLOCK__
 
-applyData(FIXTURE);
+applyData(__FIXTURE__);
 
 console.log(JSON.stringify({
     total: totalEl.textContent,
     papers: citationEls.map((e) => e.textContent),
 }));
 """
-    script = script.replace("APPLY_BLOCK", extract_js_apply_block())
-    script = script.replace("TITLES", json.dumps(titles))
-    script = script.replace("FIXTURE", json.dumps(fixture))
+    # The placeholders are deliberately distinct: replacing "TITLES" first would
+    # also rewrite the "ALT_TITLES" token and produce "ALT_[...]".
+    script = script.replace("__APPLY_BLOCK__", extract_js_apply_block())
+    script = script.replace("__TITLES__", json.dumps(titles))
+    script = script.replace("__ALT_TITLES__", json.dumps(alt_titles or [""] * len(titles)))
+    script = script.replace("__FIXTURE__", json.dumps(fixture))
 
     result = subprocess.run(
         [node, "-e", script], capture_output=True, text=True, timeout=60
