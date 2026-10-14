@@ -35,7 +35,7 @@ I have published **11** peer-reviewed papers and preprints, including an **early
 I am always happy to discuss research and open to collaboration — feel free to reach out by email.
 
 # 🔥 News
-- *2026.10*: &nbsp;🎉 **OncoRelay3D**, a foundation-model-assisted framework that reconstructs 3D tumour cell-expression fields for mechanism-aware directed cell–cell communication, is accepted to the **MICCAI 2026 CMMCA Workshop**.
+- *2026.10*: &nbsp;🎉 **OncoRelay3D**, a foundation-model-assisted framework that reconstructs 3D tumour cell-expression fields for mechanism-aware directed cell–cell communication, is accepted to **MICCAI 2026**.
 - *2026.10*: &nbsp;🎉 Our spatial transcriptomics enhancement foundation model **FOCUS** is updated on bioRxiv (v3) and retitled *Coordinated Enhancement of Molecular and Spatial Fidelity for Biological Inference in Spatial Transcriptomics*.
 - *2026.10*: &nbsp;📄 **HARMONIC**, our histology-aware graph framework for cell–cell communication inference, is updated on bioRxiv (v3).
 - *2026.08*: &nbsp;🎉 **CoInS-Net**, a continuous position-aware network for joint medical image interpolation and segmentation, is released on arXiv. *(co-first author)*

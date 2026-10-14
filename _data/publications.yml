@@ -95,12 +95,13 @@
   figure: "images/papers/vtcnet.png"
 
 - group: collaborative
-  badge: "CMMCA 2026"
-  venue_full: "MICCAI 2026 Workshop on Computational Mathematics Modeling in Cancer Analysis (CMMCA)"
+  badge: "MICCAI 2026"
+  venue_full: "Medical Image Computing and Computer Assisted Intervention (MICCAI)"
+  venue_extra: "CMMCA Workshop"
   title: "OncoRelay3D: Foundation-Model-Assisted Reconstruction of 3D Tumor Cell-Expression Fields for Mechanism-Aware Directed Cell-Cell Communication"
   url: ""
-  # 刚接收/刚上传的论文还不会被 OpenAlex 收录，tools/verify_live_matching.py
-  # 会把它单列出来而不是报成"匹配失败"。等收录后删掉这一行即可。
+  # 你的 Google Scholar 已经收录了这篇；这里的标记指的是**我的兜底数据源 OpenAlex**
+  # 还没收录它。Google Scholar 抓取成功时会自动显示引用数，OpenAlex 收录后把这两行删掉。
   not_in_feed: true
   authors_html: 'Zhitong Li, Yixuan Jiang, Ziming Liu, Chenjie Wu, <strong>Ningfeng Que</strong>, <strong>Chao Li</strong><sup>✉</sup>'
   note: "Reconstructs a continuous 3D tumour cell-expression field from H&E and ST sections, then infers mechanism-aware directed cell–cell communication on it."
