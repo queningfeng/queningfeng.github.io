@@ -145,8 +145,10 @@ def test_openalex_fallback_parsing() -> None:
     print("\n[3] OpenAlex fallback produces the schema the page expects")
 
     author_fixture = {
+        "id": "https://openalex.org/A5094126306",
         "display_name": "Ningfeng Que",
         "cited_by_count": 69,
+        "works_count": 10,
         "summary_stats": {"h_index": 3, "i10_index": 3},
     }
     works_fixture = {
@@ -192,7 +194,14 @@ def test_openalex_fallback_parsing() -> None:
         data is not None and len(data["publications"]) == 2,
         "untitled work is skipped (2 of 3 kept)",
     )
-    check(len(calls) == 2, "both OpenAlex endpoints were queried")
+    check(
+        any("author.orcid" in url for url in calls),
+        "queried works by ORCID",
+    )
+    check(
+        any("author.id" in url for url in calls),
+        "queried works by OpenAlex author id as well",
+    )
 
     if data:
         for entry in data["publications"].values():
@@ -201,6 +210,85 @@ def test_openalex_fallback_parsing() -> None:
                 and isinstance(entry.get("bib", {}).get("title"), str),
                 f"entry has the schema the page reads ({entry['bib']['title'][:34]!r})",
             )
+
+
+def test_openalex_merges_both_queries() -> None:
+    """Regression: an ORCID-only query drops papers OpenAlex never linked to the ORCID.
+
+    The IJCAI 2024 paper ("Multi-scale Context-Aware Networks ...") is attached to
+    the author entity but carries no ORCID on its authorship, so it only shows up
+    in the author-id query. If the two queries are not merged, that paper silently
+    gets no citation count on the homepage.
+    """
+    print("\n[3b] ORCID 查询与 author-id 查询取并集")
+
+    author_fixture = {
+        "id": "https://openalex.org/A5094126306",
+        "display_name": "Ningfeng Que",
+        "cited_by_count": 69,
+        "works_count": 10,
+        "summary_stats": {"h_index": 3, "i10_index": 3},
+    }
+    by_orcid = {
+        "results": [
+            {
+                "id": "https://openalex.org/W1",
+                "doi": "https://doi.org/10.1000/orcid-only",
+                "title": "A paper with an ORCID",
+                "publication_year": 2025,
+                "cited_by_count": 4,
+            }
+        ]
+    }
+    by_author_id = {
+        "results": [
+            {
+                "id": "https://openalex.org/W1",
+                "doi": "https://doi.org/10.1000/orcid-only",
+                "title": "A paper with an ORCID",
+                "publication_year": 2025,
+                "cited_by_count": 4,
+            },
+            {
+                "id": "https://openalex.org/W9",
+                "doi": "https://doi.org/10.24963/ijcai.2024/351",
+                "title": "Multi-scale Context-Aware Networks for Human Activity Recognition",
+                "publication_year": 2024,
+                "cited_by_count": 2,
+            },
+        ]
+    }
+
+    def fake_http_json(url: str, *args, **kwargs):  # noqa: ANN002, ANN003
+        if "/authors/" in url:
+            return author_fixture
+        if "author.id" in url:
+            return by_author_id
+        return by_orcid
+
+    original = crawler.http_json
+    crawler.http_json = fake_http_json
+    try:
+        data = crawler.from_openalex()
+    finally:
+        crawler.http_json = original
+
+    check(data is not None, "from_openalex returns data")
+    if not data:
+        return
+    check(
+        len(data["publications"]) == 2,
+        f"并集包含两篇（实际 {len(data['publications'])}）",
+    )
+    titles = [p["bib"]["title"] for p in data["publications"].values()]
+    check(
+        any("Multi-scale" in title for title in titles),
+        "只出现在 author-id 查询里的 IJCAI 论文被保留",
+    )
+    check(
+        len(titles) == len(set(titles)),
+        "同一 DOI 不会重复计入",
+    )
 
 
 def test_gs_schema_matches_page_expectations() -> None:
@@ -228,6 +316,196 @@ def test_refuses_to_publish_empty_data() -> None:
     check(data is None, "from_openalex returns None when nothing usable came back")
 
 
+def extract_js_apply_block() -> str:
+    """Pull `normTitle` + `setText` + `applyData` out of the include file.
+
+    The region is contiguous in the source but contains Liquid tags, which are
+    not valid JavaScript, so they are stripped. `load()` is deliberately left
+    out: it is the only part that touches the network.
+    """
+    source = INCLUDE.read_text(encoding="utf-8")
+    start = source.index("function normTitle(value)")
+    end = source.index("function load()")
+    region = source[start:end]
+    # Drop {% if ... %} / {% else %} / {% endif %} and the surrounding
+    # assignments so what remains is plain JS. Duplicate `var` declarations are
+    # legal in sloppy mode, so the two gsDataBaseUrl assignments are harmless.
+    region = re.sub(r"\{%[^%]*%\}", "", region)
+    if "{%" in region or "%}" in region:
+        raise AssertionError("Liquid stripping left fragments behind")
+    return region
+
+
+def run_apply_data(node: str, fixture: dict, titles: list[str]) -> dict:
+    """Execute the production applyData() against a stubbed DOM."""
+    script = """
+const totalEl = { _t: "", set textContent(v) { this._t = String(v); },
+                  get textContent() { return this._t; },
+                  setAttribute() {} };
+const citationEls = TITLES.map((t) => ({
+    _t: "", "data-title": t,
+    set textContent(v) { this._t = String(v); },
+    get textContent() { return this._t; },
+    getAttribute(k) { return this[k]; },
+    setAttribute(k, v) { this[k] = String(v); },
+}));
+globalThis.document = {
+    getElementById: (id) => (id === "total_cit" ? totalEl : null),
+    getElementsByClassName: (cls) => (cls === "show_paper_citations" ? citationEls : []),
+};
+
+APPLY_BLOCK
+
+applyData(FIXTURE);
+
+console.log(JSON.stringify({
+    total: totalEl.textContent,
+    papers: citationEls.map((e) => e.textContent),
+}));
+"""
+    script = script.replace("APPLY_BLOCK", extract_js_apply_block())
+    script = script.replace("TITLES", json.dumps(titles))
+    script = script.replace("FIXTURE", json.dumps(fixture))
+
+    result = subprocess.run(
+        [node, "-e", script], capture_output=True, text=True, timeout=60
+    )
+    if result.returncode != 0:
+        raise AssertionError(f"node failed:\n{result.stderr}")
+    return json.loads(result.stdout)
+
+
+def test_duplicate_normalised_titles_keep_the_maximum() -> None:
+    """Regression: a journal version and its preprint normalise to the same key.
+
+    OpenAlex lists VTCNet twice (Wiley `ima.23161` with 12 citations and the SSRN
+    preprint `ssrn.4748846` with 3). Writing the map in key order let the *later*
+    preprint overwrite the journal count, so the page showed 3 instead of 12.
+    """
+    print("\n[6] 同一篇论文的重复收录取较大引用数")
+
+    node = find_node()
+    if node is None:
+        print("  SKIP  node not found")
+        return
+
+    title = "VTCNet: A Feature Fusion DL Model Based on CNN and ViT for the Classification of Cervical Cells"
+    fixture = {
+        "source": "openalex",
+        "citedby": 69,
+        "updated": "2026-10-14 17:28:18 UTC",
+        "publications": {
+            # Exactly what OpenAlex actually returns for the Wiley version.
+            "ima.23161": {
+                "bib": {
+                    "title": (
+                        "VTCNet : A Feature Fusion DL Model Based on CNN and ViT "
+                        "for the Classification of Cervical Cells"
+                    )
+                },
+                "num_citations": 12,
+            },
+            # The SSRN preprint, listed second -- this is the order that won before.
+            "ssrn.4748846": {
+                "bib": {
+                    "title": (
+                        "Vtcnet: A Feature Fusion Dl Model Based on Cnn and Vit "
+                        "for the Classification of Cervical Cells"
+                    )
+                },
+                "num_citations": 3,
+            },
+        },
+    }
+
+    output = run_apply_data(node, fixture, [title])
+    check(output["total"] == "69", "总引用数被回填")
+    check(
+        output["papers"][0] == "Cited by 12",
+        f"重复收录时取最大值 (得到 {output['papers'][0]!r})",
+    )
+
+
+def test_prefix_fallback_for_truncated_titles() -> None:
+    print("\n[7] 标题被截断时的前缀兜底匹配")
+
+    node = find_node()
+    if node is None:
+        print("  SKIP  node not found")
+        return
+
+    long_title = (
+        "Adaptive Spatial Transcriptomics Interpolation via Cross-modal "
+        "Cross-slice Modeling with Extra Words Appended Here"
+    )
+    fixture = {
+        "source": "google_scholar",
+        "citedby": 5,
+        "publications": {
+            "x": {
+                "bib": {
+                    "title": (
+                        "Adaptive Spatial Transcriptomics Interpolation via "
+                        "Cross-modal Cross-slice Modeling"
+                    )
+                },
+                "num_citations": 2,
+            }
+        },
+    }
+
+    output = run_apply_data(node, fixture, [long_title])
+    check(
+        output["papers"][0] == "Cited by 2",
+        f"数据源标题更短时回退匹配 (得到 {output['papers'][0]!r})",
+    )
+
+    # 反方向：数据源标题更长（Google Scholar 上常见 "Title…" 截断）
+    shorter_page_title = (
+        "Adaptive Spatial Transcriptomics Interpolation via Cross-modal Cross-slice Modeling"
+    )
+    longer_fixture = {
+        "source": "google_scholar",
+        "citedby": 5,
+        "publications": {
+            "y": {
+                "bib": {
+                    "title": shorter_page_title
+                    + " with Extra Words Appended Here And More"
+                },
+                "num_citations": 7,
+            }
+        },
+    }
+    output2 = run_apply_data(node, longer_fixture, [shorter_page_title])
+    check(
+        output2["papers"][0] == "Cited by 7",
+        f"数据源标题更长时回退匹配 (得到 {output2['papers'][0]!r})",
+    )
+
+
+def test_unknown_titles_stay_empty() -> None:
+    print("\n[8] 匹配不到的论文保持空白，不显示 0")
+
+    node = find_node()
+    if node is None:
+        print("  SKIP  node not found")
+        return
+
+    fixture = {
+        "source": "openalex",
+        "citedby": 1,
+        "publications": {
+            "y": {"bib": {"title": "Some Totally Different Paper"}, "num_citations": 9}
+        },
+    }
+    output = run_apply_data(node, fixture, ["My Paper That Is Not In The Feed"])
+    check(
+        output["papers"][0] == "",
+        f"未匹配的论文保持空 (得到 {output['papers'][0]!r})",
+    )
+
+
 def main() -> int:
     print("=" * 72)
     print("crawler / title-matching tests")
@@ -236,8 +514,12 @@ def main() -> int:
     test_normalisers_agree()
     test_norm_title_edge_cases()
     test_openalex_fallback_parsing()
+    test_openalex_merges_both_queries()
     test_gs_schema_matches_page_expectations()
     test_refuses_to_publish_empty_data()
+    test_duplicate_normalised_titles_keep_the_maximum()
+    test_prefix_fallback_for_truncated_titles()
+    test_unknown_titles_stay_empty()
 
     print("\n" + "=" * 72)
     if failures:

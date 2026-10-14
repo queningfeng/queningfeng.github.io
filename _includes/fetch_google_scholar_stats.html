@@ -47,7 +47,13 @@
             var title = bib.title || entry.title;
             var normalized = normTitle(title);
             if (!normalized) { return; }
-            if (typeof entry.num_citations === "number") {
+            if (typeof entry.num_citations !== "number") { return; }
+
+            // 同一篇论文可能被数据源收录多次：期刊正式版 + SSRN/arXiv/bioRxiv 预印版
+            // 的标题归一化后往往完全一样（例如 VTCNet 的 Wiley 版和 SSRN 版）。
+            // 这里取**较大值**，否则后写入的预印版引用数会覆盖正式版。
+            var existing = publicationMap[normalized];
+            if (existing === undefined || entry.num_citations > existing) {
                 publicationMap[normalized] = entry.num_citations;
             }
         });
@@ -66,12 +72,20 @@
             if (!normalized) { return; }
             var count = publicationMap[normalized];
 
-            // 精确匹配失败时退一步：用前 60 个字符做前缀匹配，
-            // 处理 Google Scholar 上标题被截断或者大小写微调的情况。
-            if (count === undefined && normalized.length > 60) {
-                var prefix = normalized.slice(0, 60);
+            // 精确匹配失败时退一步做前缀匹配。两个方向都要试：
+            //   - 数据源标题更长：Google Scholar 上标题被截断成 "…"
+            //   - 数据源标题更短：OpenAlex 只登记了预印版的简称
+            // 太短的标题不参与，否则会误配。
+            if (count === undefined) {
+                var MIN_PREFIX = 32;
+                var pagePrefix = normalized.slice(0, 64);
                 Object.keys(publicationMap).some(function (key) {
-                    if (key.indexOf(prefix) === 0) {
+                    if (key.length < MIN_PREFIX || normalized.length < MIN_PREFIX) {
+                        return false;
+                    }
+                    var keyPrefix = key.slice(0, 64);
+                    if (key.indexOf(pagePrefix) === 0 ||
+                        normalized.indexOf(keyPrefix) === 0) {
                         count = publicationMap[key];
                         return true;
                     }

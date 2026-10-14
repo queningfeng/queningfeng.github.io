@@ -153,24 +153,73 @@ def from_google_scholar() -> dict | None:
 # ---------------------------------------------------------------------------
 # Source 2: OpenAlex (fallback)
 # ---------------------------------------------------------------------------
+def _works_by(filter_expression: str) -> list[dict]:
+    payload = http_json(
+        "https://api.openalex.org/works"
+        f"?filter={filter_expression}&per_page=200&mailto={MAILTO}"
+        "&select=id,doi,title,publication_year,cited_by_count"
+    )
+    return payload.get("results", [])
+
+
 def from_openalex() -> dict | None:
-    log(f"  querying OpenAlex for ORCID {ORCID} ...")
+    """Collect works via BOTH the ORCID and the OpenAlex author id.
+
+    Filtering by ORCID alone is not enough: OpenAlex only links a work to an
+    ORCID when the publisher deposited one. The IJCAI 2024 paper is linked to the
+    author entity but has no ORCID on its authorship, so an ORCID-only query
+    silently drops it and the homepage shows no citation count for that paper.
+    Querying both and merging fixes that.
+    """
+    log(f"  resolving OpenAlex author for ORCID {ORCID} ...")
     try:
-        author = http_json(
+        author_by_orcid = http_json(
             f"https://api.openalex.org/authors/https://orcid.org/{ORCID}"
             f"?mailto={MAILTO}"
         )
-        works = http_json(
-            "https://api.openalex.org/works"
-            f"?filter=author.orcid:{ORCID}&per_page=200&mailto={MAILTO}"
-            "&select=id,doi,title,publication_year,cited_by_count"
-        )
     except Exception as exc:  # noqa: BLE001
-        log(f"  OpenAlex lookup failed: {type(exc).__name__}: {exc}")
+        log(f"  OpenAlex author lookup failed: {type(exc).__name__}: {exc}")
         return None
 
+    author_id = (author_by_orcid.get("id") or "").rsplit("/", 1)[-1]
+    candidates: list[dict] = []
+
+    try:
+        candidates.append(("orcid", _works_by(f"author.orcid:{ORCID}")))
+    except Exception as exc:  # noqa: BLE001
+        log(f"  works-by-ORCID query failed: {type(exc).__name__}: {exc}")
+
+    author_by_id = None
+    if author_id:
+        try:
+            author_by_id = http_json(
+                f"https://api.openalex.org/authors/{author_id}?mailto={MAILTO}"
+            )
+            candidates.append(("author_id", _works_by(f"author.id:{author_id}")))
+        except Exception as exc:  # noqa: BLE001
+            log(f"  works-by-author-id query failed: {type(exc).__name__}: {exc}")
+
+    if not candidates:
+        log("  no OpenAlex query succeeded.")
+        return None
+
+    # Merge on the work identity, keeping the larger citation count when the two
+    # queries disagree (e.g. a journal version and its preprint).
+    merged: dict[str, dict] = {}
+    for source_name, works in candidates:
+        log(f"  {source_name}: {len(works)} works")
+        for work in works:
+            identity = (work.get("doi") or work.get("id") or "").lower()
+            if not identity:
+                continue
+            previous = merged.get(identity)
+            if previous is None or (work.get("cited_by_count") or 0) > (
+                previous.get("cited_by_count") or 0
+            ):
+                merged[identity] = work
+
     publications = {}
-    for work in works.get("results", []):
+    for work in merged.values():
         title = work.get("title") or ""
         if not title:
             continue
@@ -188,8 +237,15 @@ def from_openalex() -> dict | None:
         log("  OpenAlex returned no works.")
         return None
 
+    # Prefer whichever author record knows about more work.
+    author = author_by_orcid
+    if author_by_id and (author_by_id.get("works_count") or 0) > (
+        author_by_orcid.get("works_count") or 0
+    ):
+        author = author_by_id
     stats = (author or {}).get("summary_stats", {}) or {}
-    log(f"  got {len(publications)} works from OpenAlex.")
+
+    log(f"  merged {len(publications)} unique works from OpenAlex.")
     return {
         "source": "openalex",
         "name": (author or {}).get("display_name", ""),
