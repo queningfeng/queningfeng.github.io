@@ -291,7 +291,11 @@ def main() -> int:
         log("Both sources failed. Leaving previously published data untouched.")
         return 0
 
-    data["updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    # ISO 8601 so the page can Date.parse() it reliably when deciding whether the
+    # CDN handed back a stale cache. updated_display is only for the tooltip.
+    now = datetime.now(timezone.utc)
+    data["updated"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    data["updated_display"] = now.strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Sanity check: never publish a payload that would blank out the homepage.
     titles = [p["bib"]["title"] for p in data["publications"].values()]

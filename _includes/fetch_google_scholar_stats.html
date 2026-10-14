@@ -23,14 +23,86 @@
     }
 
     {% if site.google_scholar_stats_use_cdn %}
-    var gsDataBaseUrl = "https://cdn.jsdelivr.net/gh/{{ site.repository }}@";
+    var PRIMARY_BASE = "https://cdn.jsdelivr.net/gh/{{ site.repository }}@";
+    var FALLBACK_BASE = "https://raw.githubusercontent.com/{{ site.repository }}/";
     {% else %}
-    var gsDataBaseUrl = "https://raw.githubusercontent.com/{{ site.repository }}/";
+    var PRIMARY_BASE = "https://raw.githubusercontent.com/{{ site.repository }}/";
+    var FALLBACK_BASE = "https://cdn.jsdelivr.net/gh/{{ site.repository }}@";
     {% endif %}
 
-    // 加个按天变化的查询串，绕开 jsDelivr 的缓存（否则最多会看到 12 小时前的数据）。
-    var cacheBuster = "?v=" + new Date().toISOString().slice(0, 13);
-    var dataUrl = gsDataBaseUrl + "google-scholar-stats/gs_data.json" + cacheBuster;
+    var STATS_PATH = "google-scholar-stats/gs_data.json";
+
+    // jsDelivr 对 @分支 的地址会缓存大约 12 小时，而且**不按查询串区分缓存**
+    // （实测 ?v=xxx 和不带参数返回的是同一份旧文件），所以加 cache buster 没有用。
+    // 这里改成检测数据本身的时间戳：超过这个年龄就认为拿到的是旧缓存，再去 raw
+    // 取一份更新的。CDN 快（国内可访问），raw 新，两者互补。
+    var STALE_AFTER_MS = 12 * 60 * 60 * 1000;
+
+    function fetchJson(baseUrl) {
+        return fetch(baseUrl + STATS_PATH, { cache: "no-store" }).then(function (response) {
+            if (!response.ok) { throw new Error("HTTP " + response.status); }
+            return response.json();
+        });
+    }
+
+    // 数据里的 updated 是 ISO 8601（例如 2026-10-14T17:32:29Z）。
+    // 同时兼容早期写成的 "2026-10-14 17:32:29 UTC"，避免解析失败。
+    function updatedAt(data) {
+        var raw = (data && data.updated) || "";
+        var parsed = Date.parse(raw);
+        if (!isNaN(parsed)) { return parsed; }
+        var match = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(raw);
+        if (match) {
+            return Date.UTC(
+                Number(match[1]), Number(match[2]) - 1, Number(match[3]),
+                Number(match[4]), Number(match[5]), Number(match[6])
+            );
+        }
+        return NaN;
+    }
+
+    function isStale(data) {
+        var when = updatedAt(data);
+        // 判断不出来时当作新鲜的，免得每次访问都多打一次请求。
+        if (isNaN(when)) { return false; }
+        return (Date.now() - when) > STALE_AFTER_MS;
+    }
+
+    function newerOf(first, second) {
+        if (!first) { return second; }
+        if (!second) { return first; }
+        var a = updatedAt(first);
+        var b = updatedAt(second);
+        if (isNaN(a)) { return second; }
+        if (isNaN(b)) { return first; }
+        return b > a ? second : first;
+    }
+
+    function load() {
+        fetchJson(PRIMARY_BASE)
+            .then(function (primary) {
+                if (!isStale(primary)) {
+                    applyData(primary);
+                    return null;
+                }
+                // 主源是旧缓存：再问一次备用源，谁新用谁。
+                // raw 在国内可能不通，失败就继续用手上的数据，不影响页面。
+                return fetchJson(FALLBACK_BASE)
+                    .then(function (fresh) { applyData(newerOf(primary, fresh)); })
+                    .catch(function () { applyData(primary); });
+            })
+            .catch(function (error) {
+                return fetchJson(FALLBACK_BASE)
+                    .then(applyData)
+                    .catch(function () {
+                        // 两个源都拿不到（比如 Action 还没跑过第一次）时静默失败，
+                        // 页面保持占位符 "—"，其它内容不受影响。
+                        if (window.console && console.warn) {
+                            console.warn("[acad-homepage] 引用数据读取失败：", error.message);
+                        }
+                    });
+            });
+    }
 
     function setText(el, text, title) {
         if (!el) { return; }
@@ -64,7 +136,9 @@
         setText(document.getElementById("total_cit"),
                 String(data.citedby != null ? data.citedby : "—"),
                 "总引用数，数据来源：" + source +
-                (data.updated ? "，更新时间 " + data.updated : ""));
+                (data.updated_display || data.updated
+                    ? "，更新时间 " + (data.updated_display || data.updated)
+                    : ""));
 
         var elements = document.getElementsByClassName("show_paper_citations");
         Array.prototype.forEach.call(elements, function (element) {
@@ -98,22 +172,6 @@
                 element.setAttribute("title", "被引 " + count + " 次（" + source + "）");
             }
         });
-    }
-
-    function load() {
-        fetch(dataUrl, { cache: "no-store" })
-            .then(function (response) {
-                if (!response.ok) { throw new Error("HTTP " + response.status); }
-                return response.json();
-            })
-            .then(applyData)
-            .catch(function (error) {
-                // 数据还没生成（比如 Action 第一次还没跑完）时静默失败，
-                // 页面上保持占位符 "—"，不影响其它内容。
-                if (window.console && console.warn) {
-                    console.warn("[acad-homepage] 引用数据读取失败：", error.message);
-                }
-            });
     }
 
     if (document.readyState === "loading") {

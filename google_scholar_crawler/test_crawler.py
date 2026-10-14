@@ -321,22 +321,24 @@ def test_refuses_to_publish_empty_data() -> None:
 
 
 def extract_js_apply_block() -> str:
-    """Pull `normTitle` + `setText` + `applyData` out of the include file.
+    """Pull every function definition out of the include file, minus the bootstrap.
 
-    The region is contiguous in the source but contains Liquid tags, which are
-    not valid JavaScript, so they are stripped. `load()` is deliberately left
-    out: it is the only part that touches the network.
+    The region runs from `normTitle` to the `document.readyState` guard at the
+    bottom, so it contains fetchJson/updatedAt/isStale/newerOf/setText/applyData
+    but never the code that actually fires a network request.
     """
     source = INCLUDE.read_text(encoding="utf-8")
     start = source.index("function normTitle(value)")
-    end = source.index("function load()")
+    end = source.index('if (document.readyState === "loading")')
     region = source[start:end]
-    # Drop {% if ... %} / {% else %} / {% endif %} and the surrounding
-    # assignments so what remains is plain JS. Duplicate `var` declarations are
-    # legal in sloppy mode, so the two gsDataBaseUrl assignments are harmless.
+    # Drop {% if ... %} / {% else %} / {% endif %}. The {{ site.repository }}
+    # interpolations sit inside string literals, so they stay valid JavaScript.
     region = re.sub(r"\{%[^%]*%\}", "", region)
     if "{%" in region or "%}" in region:
         raise AssertionError("Liquid stripping left fragments behind")
+    for required in ("applyData", "updatedAt", "isStale", "newerOf"):
+        if f"function {required}" not in region:
+            raise AssertionError(f"{required} is missing from the extracted block")
     return region
 
 
@@ -575,6 +577,75 @@ def test_openalex_name_search_catches_unlinked_authorship() -> None:
     )
 
 
+def run_extracted_js(node: str, statements: str) -> str:
+    """Run arbitrary statements inside the extracted production block."""
+    script = """
+const totalEl = { _t: "", set textContent(v) { this._t = String(v); },
+                  get textContent() { return this._t; }, setAttribute() {} };
+globalThis.document = {
+    getElementById: () => totalEl,
+    getElementsByClassName: () => [],
+};
+BLOCK
+STATEMENTS
+"""
+    script = (
+        script.replace("BLOCK", extract_js_apply_block())
+        .replace("STATEMENTS", statements)
+    )
+    result = subprocess.run(
+        [node, "-e", script], capture_output=True, text=True, timeout=60
+    )
+    if result.returncode != 0:
+        raise AssertionError(f"node failed:\n{result.stderr}")
+    return result.stdout.strip()
+
+
+def test_staleness_logic() -> None:
+    """The CDN caches @branch URLs for ~12h and ignores query strings.
+
+    Verified against the live endpoint: two different ?v= values returned byte
+    identical stale JSON. So the page cannot rely on a cache buster -- it has to
+    look at the timestamp in the payload and go to raw.githubusercontent.com when
+    the CDN copy is old.
+    """
+    print("\n[9] CDN 陈旧缓存的判定与回退")
+
+    node = find_node()
+    if node is None:
+        print("  SKIP  node not found")
+        return
+
+    statements = """
+function hoursAgo(h) {
+    return new Date(Date.now() - h * 3600 * 1000).toISOString().replace(/\\.\\d+Z$/, "Z");
+}
+const out = {
+    isoParsed: updatedAt({ updated: "2026-10-14T17:32:29Z" }) === Date.UTC(2026, 9, 14, 17, 32, 29),
+    legacyParsed: updatedAt({ updated: "2026-10-14 17:32:29 UTC" }) === Date.UTC(2026, 9, 14, 17, 32, 29),
+    garbageIsFresh: isStale({ updated: "not a date" }) === false,
+    freshNotStale: isStale({ updated: hoursAgo(1) }) === false,
+    oldIsStale: isStale({ updated: hoursAgo(13) }) === true,
+    picksNewer: newerOf({ updated: hoursAgo(20), tag: "old" },
+                        { updated: hoursAgo(1), tag: "new" }).tag === "new",
+    keepsNewer: newerOf({ updated: hoursAgo(1), tag: "new" },
+                        { updated: hoursAgo(20), tag: "old" }).tag === "new",
+    handlesNull: newerOf(null, { tag: "only" }).tag === "only",
+};
+console.log(JSON.stringify(out));
+"""
+    out = json.loads(run_extracted_js(node, statements))
+
+    check(out["isoParsed"], "ISO 8601 时间戳能被解析")
+    check(out["legacyParsed"], "旧的 'YYYY-MM-DD HH:MM:SS UTC' 格式也能解析")
+    check(out["garbageIsFresh"], "时间戳无法解析时按新鲜处理（不做多余请求）")
+    check(out["freshNotStale"], "1 小时前的数据不算陈旧")
+    check(out["oldIsStale"], "13 小时前的数据判定为陈旧，会去 raw 取新的")
+    check(out["picksNewer"], "两份数据里选更新的一份")
+    check(out["keepsNewer"], "顺序反过来也选更新的一份")
+    check(out["handlesNull"], "缺一份数据时不报错")
+
+
 def main() -> int:
     print("=" * 72)
     print("crawler / title-matching tests")
@@ -590,6 +661,7 @@ def main() -> int:
     test_duplicate_normalised_titles_keep_the_maximum()
     test_prefix_fallback_for_truncated_titles()
     test_unknown_titles_stay_empty()
+    test_staleness_logic()
 
     print("\n" + "=" * 72)
     if failures:
