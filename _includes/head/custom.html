@@ -1,0 +1,26 @@
+<link rel="icon" href="images/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+<link rel="manifest" href="images/site.webmanifest">
+
+<meta name="msapplication-TileColor" content="#00369f">
+<!-- 原模板这里还引用了 images/mstile-144x144.png 和 images/browserconfig.xml，
+     但仓库里根本没有这两个文件，会让浏览器控制台报 404，所以删掉了。 -->
+<meta name="theme-color" content="#00369f">
+<link rel="stylesheet" href="assets/css/academicons.css"/>
+
+<!-- MathJax：站点目前没有公式，但万一你以后要写，留着不影响加载（async）。
+     完全不想要的话把下面三行一起删掉即可。 -->
+<script type="text/x-mathjax-config"> MathJax.Hub.Config({ TeX: { equationNumbers: { autoNumber: "all" } } }); </script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=TeX-MML-AM_CHTML' async></script>
+
+<!-- end custom head snippets -->

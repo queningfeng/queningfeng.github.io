@@ -1,0 +1,24 @@
+# 顶部导航链接。
+# url 里的 #-xxx 是 kramdown 根据 Markdown 标题自动生成的锚点，
+# 标题文字改动后这里也要跟着改，否则点击导航会跳不到位置。
+main:
+  - title: "About Me"
+    url: "/#about-me"
+
+  - title: "News"
+    url: "/#-news"
+
+  - title: "Publications"
+    url: "/#-publications"
+
+  - title: "Educations"
+    url: "/#-educations"
+
+  # 等你把内容发过来，把下面三行前面的 "# " 去掉，并在 _pages/about.md
+  # 里取消对应段落的 HTML 注释。
+  # - title: "Honors and Awards"
+  #   url: "/#-honors-and-awards"
+  # - title: "Academic Services"
+  #   url: "/#-academic-services"
+  # - title: "Internships"
+  #   url: "/#-internships"

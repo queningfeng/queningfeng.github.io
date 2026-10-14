@@ -1,0 +1,77 @@
+name: Update Google Scholar citations
+
+# 这个 Action 负责把「引用数」抓下来，推到独立的 google-scholar-stats 分支。
+# 主页的 JS 会去读那个分支里的 gs_data.json，所以主页本身不需要重新构建。
+#
+# 触发时机：
+#   - 每天 UTC 08:00（北京时间 16:00）自动跑一次
+#   - 你在 Actions 页面手动点 "Run workflow"
+#   - main 分支上改了爬虫或论文列表之后
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'google_scholar_crawler/**'
+      - '.github/workflows/google_scholar_crawler.yaml'
+      - '_pages/about.md'
+      - '_config.yml'
+
+# 推送到 google-scholar-stats 分支需要写权限（默认 GITHUB_TOKEN 是只读的）
+permissions:
+  contents: write
+
+# 避免定时任务和手动触发撞在一起
+concurrency:
+  group: google-scholar-stats
+  cancel-in-progress: false
+
+jobs:
+  update-citations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r google_scholar_crawler/requirements.txt
+
+      - name: Collect citation data
+        # GOOGLE_SCHOLAR_ID 和 ORCID 在 main.py 里都有默认值（都是公开信息），
+        # 所以你可以完全跳过配置 Secret 这一步。想覆盖再在
+        # Settings -> Secrets and variables -> Actions 里加同名 Secret。
+        env:
+          GOOGLE_SCHOLAR_ID: ${{ secrets.GOOGLE_SCHOLAR_ID }}
+          ORCID: ${{ secrets.ORCID }}
+        run: python google_scholar_crawler/main.py
+
+      - name: Publish to google-scholar-stats branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # 两个数据源都失败时 main.py 不会写文件，这时什么也不做，
+          # 保留上一次成功的数字，而不是把主页清空。
+          if [ ! -f google_scholar_crawler/results/gs_data.json ]; then
+            echo "没有产生新数据，跳过发布。"
+            exit 0
+          fi
+
+          cd google_scholar_crawler/results
+          git init -q -b google-scholar-stats
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "chore: update citation data [skip ci]"
+          git push --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            HEAD:google-scholar-stats
+          echo "已更新 google-scholar-stats 分支。"

@@ -1,0 +1,111 @@
+<script>
+/*
+ * 从 google-scholar-stats 分支读取引用数据，回填页面上的引用数。
+ *
+ * 与官方模板的区别：模板用「作者ID:论文簇ID」作为键去查引用数，而那个簇 ID
+ * 只有爬虫跑成功一次之后才能拿到，等于第一次部署时页面上全是空的。
+ * 这里改成用**论文标题**匹配（两边都做同样的归一化：转小写、去掉所有非字母数字
+ * 字符），所以：
+ *   - 你不需要知道任何 Google Scholar 内部 ID；
+ *   - 爬虫换数据源（Google Scholar 抓不到时会退回 OpenAlex）也照样能匹配。
+ */
+(function () {
+    "use strict";
+
+    // --- 归一化：必须与 google_scholar_crawler/main.py 里的 norm_title 保持一致 ---
+    function normTitle(value) {
+        if (!value) { return ""; }
+        return String(value)
+            .toLowerCase()
+            .replace(/&[a-z]+;/g, " ")
+            .replace(/<[^>]*>/g, " ")
+            .replace(/[^a-z0-9]+/g, "");
+    }
+
+    {% if site.google_scholar_stats_use_cdn %}
+    var gsDataBaseUrl = "https://cdn.jsdelivr.net/gh/{{ site.repository }}@";
+    {% else %}
+    var gsDataBaseUrl = "https://raw.githubusercontent.com/{{ site.repository }}/";
+    {% endif %}
+
+    // 加个按天变化的查询串，绕开 jsDelivr 的缓存（否则最多会看到 12 小时前的数据）。
+    var cacheBuster = "?v=" + new Date().toISOString().slice(0, 13);
+    var dataUrl = gsDataBaseUrl + "google-scholar-stats/gs_data.json" + cacheBuster;
+
+    function setText(el, text, title) {
+        if (!el) { return; }
+        el.textContent = text;
+        if (title) { el.setAttribute("title", title); }
+    }
+
+    function applyData(data) {
+        var publicationMap = {};
+        var publications = (data && data.publications) || {};
+        Object.keys(publications).forEach(function (key) {
+            var entry = publications[key] || {};
+            var bib = entry.bib || {};
+            var title = bib.title || entry.title;
+            var normalized = normTitle(title);
+            if (!normalized) { return; }
+            if (typeof entry.num_citations === "number") {
+                publicationMap[normalized] = entry.num_citations;
+            }
+        });
+
+        var source = data.source === "openalex" ? "OpenAlex（Google Scholar 本次抓取失败时的兜底）"
+                                                : "Google Scholar";
+
+        setText(document.getElementById("total_cit"),
+                String(data.citedby != null ? data.citedby : "—"),
+                "总引用数，数据来源：" + source +
+                (data.updated ? "，更新时间 " + data.updated : ""));
+
+        var elements = document.getElementsByClassName("show_paper_citations");
+        Array.prototype.forEach.call(elements, function (element) {
+            var normalized = normTitle(element.getAttribute("data-title"));
+            if (!normalized) { return; }
+            var count = publicationMap[normalized];
+
+            // 精确匹配失败时退一步：用前 60 个字符做前缀匹配，
+            // 处理 Google Scholar 上标题被截断或者大小写微调的情况。
+            if (count === undefined && normalized.length > 60) {
+                var prefix = normalized.slice(0, 60);
+                Object.keys(publicationMap).some(function (key) {
+                    if (key.indexOf(prefix) === 0) {
+                        count = publicationMap[key];
+                        return true;
+                    }
+                    return false;
+                });
+            }
+
+            if (count !== undefined) {
+                element.textContent = "Cited by " + count;
+                element.setAttribute("title", "被引 " + count + " 次（" + source + "）");
+            }
+        });
+    }
+
+    function load() {
+        fetch(dataUrl, { cache: "no-store" })
+            .then(function (response) {
+                if (!response.ok) { throw new Error("HTTP " + response.status); }
+                return response.json();
+            })
+            .then(applyData)
+            .catch(function (error) {
+                // 数据还没生成（比如 Action 第一次还没跑完）时静默失败，
+                // 页面上保持占位符 "—"，不影响其它内容。
+                if (window.console && console.warn) {
+                    console.warn("[acad-homepage] 引用数据读取失败：", error.message);
+                }
+            });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", load);
+    } else {
+        load();
+    }
+})();
+</script>

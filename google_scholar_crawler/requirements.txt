@@ -1,0 +1,9 @@
+# Google Scholar 抓取用到的库。
+#
+# 说明：
+# - scholarly 用来爬 Google Scholar 本体。GitHub Actions 的机房 IP 经常被
+#   Google 拦截（返回 429 或验证码），抓不到时 main.py 会自动退回 OpenAlex，
+#   所以这里不加严格版本锁，避免旧版本在新 Python 上装不上。
+# - jsonpickle 是 scholarly 的运行时依赖之一，显式列出来更稳。
+scholarly>=1.7.11
+jsonpickle>=3.0.0

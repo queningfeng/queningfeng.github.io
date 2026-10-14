@@ -1,0 +1,20 @@
+# ---- Jekyll ----
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+.jekyll-assets-cache/
+
+# ---- 爬虫 ----
+# results/ 只是 Actions 运行时的产物，真正的数据会被推到
+# google-scholar-stats 分支，不应该出现在 main 分支里。
+google_scholar_crawler/results/
+__pycache__/
+*.py[cod]
+
+# ---- 编辑器 / 系统 ----
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
