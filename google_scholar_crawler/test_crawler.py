@@ -202,6 +202,10 @@ def test_openalex_fallback_parsing() -> None:
         any("author.id" in url for url in calls),
         "queried works by OpenAlex author id as well",
     )
+    check(
+        any("raw_author_name.search" in url for url in calls),
+        "queried works by raw author name as well",
+    )
 
     if data:
         for entry in data["publications"].values():
@@ -506,6 +510,71 @@ def test_unknown_titles_stay_empty() -> None:
     )
 
 
+def test_openalex_name_search_catches_unlinked_authorship() -> None:
+    """Regression: OpenAlex left author.id = null on the IJCAI 2024 authorship.
+
+    Because that authorship has neither an ORCID nor an author entity, the two
+    identifier-based queries both return 10 works and the paper gets no citation
+    count on the homepage. Only the byline text search finds it.
+    """
+    print("\n[3c] 按姓名原文查询能捞回未被消歧的署名")
+
+    author_fixture = {
+        "id": "https://openalex.org/A5094126306",
+        "display_name": "Ningfeng Que",
+        "cited_by_count": 69,
+        "works_count": 10,
+        "summary_stats": {"h_index": 3, "i10_index": 3},
+    }
+    linked_work = {
+        "id": "https://openalex.org/W1",
+        "doi": "https://doi.org/10.1000/linked",
+        "title": "A linked paper",
+        "publication_year": 2025,
+        "cited_by_count": 4,
+    }
+    unlinked_work = {
+        "id": "https://openalex.org/W4401023924",
+        "doi": "https://doi.org/10.24963/ijcai.2024/351",
+        "title": "Multi-scale Context-Aware Networks Based on Fragment Association for Human Activity Recognition",
+        "publication_year": 2024,
+        "cited_by_count": 2,
+    }
+    identifier_feed = {"results": [linked_work]}
+    name_feed = {"results": [linked_work, unlinked_work]}
+
+    calls: list[str] = []
+
+    def fake_http_json(url: str, *args, **kwargs):  # noqa: ANN002, ANN003
+        calls.append(url)
+        if "/authors/" in url:
+            return author_fixture
+        return name_feed if "raw_author_name.search" in url else identifier_feed
+
+    original = crawler.http_json
+    crawler.http_json = fake_http_json
+    try:
+        data = crawler.from_openalex()
+    finally:
+        crawler.http_json = original
+
+    check(data is not None, "from_openalex returns data")
+    if not data:
+        return
+
+    check(
+        any("raw_author_name.search=Ningfeng%20Que" in url or "raw_author_name.search:Ningfeng%20Que" in url
+            for url in calls),
+        "姓名里的空格被正确 URL 编码",
+    )
+    titles = [p["bib"]["title"] for p in data["publications"].values()]
+    check(len(titles) == 2, f"三路并集后共 2 篇（实际 {len(titles)}）")
+    check(
+        any("Multi-scale Context-Aware" in title for title in titles),
+        "只出现在姓名查询里的 IJCAI 论文被保留",
+    )
+
+
 def main() -> int:
     print("=" * 72)
     print("crawler / title-matching tests")
@@ -515,6 +584,7 @@ def main() -> int:
     test_norm_title_edge_cases()
     test_openalex_fallback_parsing()
     test_openalex_merges_both_queries()
+    test_openalex_name_search_catches_unlinked_authorship()
     test_gs_schema_matches_page_expectations()
     test_refuses_to_publish_empty_data()
     test_duplicate_normalised_titles_keep_the_maximum()

@@ -45,6 +45,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 # The Scholar ID and ORCID are public information (they are literally in the
 # profile URL), so they are used as defaults -- you do not have to configure any
@@ -163,13 +164,20 @@ def _works_by(filter_expression: str) -> list[dict]:
 
 
 def from_openalex() -> dict | None:
-    """Collect works via BOTH the ORCID and the OpenAlex author id.
+    """Collect works through three filters and merge whatever they return.
 
-    Filtering by ORCID alone is not enough: OpenAlex only links a work to an
-    ORCID when the publisher deposited one. The IJCAI 2024 paper is linked to the
-    author entity but has no ORCID on its authorship, so an ORCID-only query
-    silently drops it and the homepage shows no citation count for that paper.
-    Querying both and merging fixes that.
+    No single filter is sufficient, which is not obvious until you check:
+
+    1. ``author.orcid`` -- misses papers whose authorship carries no ORCID.
+    2. ``author.id``   -- misses papers OpenAlex never disambiguated into an
+       author entity. The IJCAI 2024 paper literally has ``author.id: null`` on
+       its "Ningfeng Que" authorship (OpenAlex also files it under Northeastern
+       University in the US), so both of the above return 10 works and quietly
+       drop it.
+    3. ``raw_author_name.search`` -- a permissive byline text search, which does
+       find it. It can match a namesake, but that is harmless here: the page only
+       reads a citation count for titles it recognises, and a namesake will never
+       share an exact normalised title with one of these papers.
     """
     log(f"  resolving OpenAlex author for ORCID {ORCID} ...")
     try:
@@ -182,10 +190,11 @@ def from_openalex() -> dict | None:
         return None
 
     author_id = (author_by_orcid.get("id") or "").rsplit("/", 1)[-1]
-    candidates: list[dict] = []
+    display_name = (author_by_orcid.get("display_name") or "").strip()
+    candidates: list[tuple[str, list[dict]]] = []
 
     try:
-        candidates.append(("orcid", _works_by(f"author.orcid:{ORCID}")))
+        candidates.append(("author.orcid", _works_by(f"author.orcid:{ORCID}")))
     except Exception as exc:  # noqa: BLE001
         log(f"  works-by-ORCID query failed: {type(exc).__name__}: {exc}")
 
@@ -195,9 +204,22 @@ def from_openalex() -> dict | None:
             author_by_id = http_json(
                 f"https://api.openalex.org/authors/{author_id}?mailto={MAILTO}"
             )
-            candidates.append(("author_id", _works_by(f"author.id:{author_id}")))
+            candidates.append(
+                ("author.id", _works_by(f"author.id:{author_id}"))
+            )
         except Exception as exc:  # noqa: BLE001
             log(f"  works-by-author-id query failed: {type(exc).__name__}: {exc}")
+
+    if display_name:
+        try:
+            candidates.append(
+                (
+                    "raw_author_name.search",
+                    _works_by(f"raw_author_name.search:{quote(display_name)}"),
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            log(f"  works-by-author-name query failed: {type(exc).__name__}: {exc}")
 
     if not candidates:
         log("  no OpenAlex query succeeded.")
