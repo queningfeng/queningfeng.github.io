@@ -30,7 +30,7 @@ My research sits at the intersection of **spatial transcriptomics**, **computati
 - **Histology-aware spatial modelling** — using paired H&E images as an explicit anatomical constraint for cell–cell communication inference.
 - **Cross-modal medical image analysis** — joint interpolation and segmentation, low-dose CT denoising, and medical image fusion.
 
-I have published **11** peer-reviewed papers and preprints, including an **early-accepted MICCAI 2025** paper as co-first author. My total <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'>Google Scholar citations <strong><span id='total_cit'>—</span></strong></a> are updated automatically every day. You can also use the Google Scholar badge <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'><img src="https://img.shields.io/endpoint?url={{ url | url_encode }}&logo=Google%20Scholar&labelColor=f6f6f6&color=9cf&style=flat&label=citations" alt="Google Scholar citations"></a>.
+I have published **11** peer-reviewed papers and preprints, including an **early-accepted MICCAI 2025** paper as co-first author. My total <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'>Google Scholar citations <strong><span id='total_cit'>—</span></strong></a> are updated automatically every day. You can also use the Google Scholar badge <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'><img src="https://img.shields.io/endpoint?url={{ url | url_encode }}&logo=Google%20Scholar&labelColor=f6f6f6&color=9cf&style=flat&label=citations&cacheSeconds=1800" alt="Google Scholar citations"></a>.
 
 I am always happy to discuss research and open to collaboration — feel free to reach out by email.
 
