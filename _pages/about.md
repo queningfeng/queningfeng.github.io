@@ -30,11 +30,12 @@ My research sits at the intersection of **spatial transcriptomics**, **computati
 - **Histology-aware spatial modelling** — using paired H&E images as an explicit anatomical constraint for cell–cell communication inference.
 - **Cross-modal medical image analysis** — joint interpolation and segmentation, low-dose CT denoising, and medical image fusion.
 
-I have published **10** peer-reviewed papers and preprints, including an **early-accepted MICCAI 2025** paper as first author. My total <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'>Google Scholar citations <strong><span id='total_cit'>—</span></strong></a> are updated automatically every day. You can also use the Google Scholar badge <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'><img src="https://img.shields.io/endpoint?url={{ url | url_encode }}&logo=Google%20Scholar&labelColor=f6f6f6&color=9cf&style=flat&label=citations" alt="Google Scholar citations"></a>.
+I have published **11** peer-reviewed papers and preprints, including an **early-accepted MICCAI 2025** paper as co-first author. My total <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'>Google Scholar citations <strong><span id='total_cit'>—</span></strong></a> are updated automatically every day. You can also use the Google Scholar badge <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'><img src="https://img.shields.io/endpoint?url={{ url | url_encode }}&logo=Google%20Scholar&labelColor=f6f6f6&color=9cf&style=flat&label=citations" alt="Google Scholar citations"></a>.
 
 I am always happy to discuss research and open to collaboration — feel free to reach out by email.
 
 # 🔥 News
+- *2026.10*: &nbsp;🎉 **OncoRelay3D**, a foundation-model-assisted framework that reconstructs 3D tumour cell-expression fields for mechanism-aware directed cell–cell communication, is accepted to the **MICCAI 2026 CMMCA Workshop**.
 - *2026.10*: &nbsp;🎉 Our spatial transcriptomics enhancement foundation model **FOCUS** is updated on bioRxiv (v3) and retitled *Coordinated Enhancement of Molecular and Spatial Fidelity for Biological Inference in Spatial Transcriptomics*.
 - *2026.10*: &nbsp;📄 **HARMONIC**, our histology-aware graph framework for cell–cell communication inference, is updated on bioRxiv (v3).
 - *2026.08*: &nbsp;🎉 **CoInS-Net**, a continuous position-aware network for joint medical image interpolation and segmentation, is released on arXiv. *(co-first author)*
@@ -47,51 +48,9 @@ I am always happy to discuss research and open to collaboration — feel free to
 
 # 📝 Publications
 
-<sup>†</sup> **Equal contribution / co-first author.** &nbsp; My name is shown in **bold**.
+<sup>†</sup> **Equal contribution (co-first author).** &nbsp; <sup>✉</sup> **Corresponding author.** &nbsp; My name is shown in **bold**.
 
-## First-author & Co-first-author Work
-
-- <span class="pub-venue">bioRxiv 2026</span> [**Coordinated Enhancement of Molecular and Spatial Fidelity for Biological Inference in Spatial Transcriptomics**](https://doi.org/10.64898/2025.12.23.696267)  
-  Xiao-Fei Wang, **Ningfeng Que**<sup>†</sup>, Hanyu Liu, Chen-Yang Tao, Yu Jiang, Yi-Xuan Jiang, Pinan Zhu, Jian-Guo Xu, Han Yan, Bing Ye, Stephen J. Price, Jianzhong Jeff Xi, Xinjie Wang, Chao Li  
-  <span class="pub-note">FOCUS — a multimodal generative foundation model for coordinated spatial transcriptomics enhancement.</span> <span class="show_paper_citations" data-title="Coordinated Enhancement of Molecular and Spatial Fidelity for Biological Inference in Spatial Transcriptomics"></span>
-
-- <span class="pub-venue">arXiv 2026</span> [**CoInS-Net: A Continuous Position-Aware Network for Joint Medical Image Interpolation and Segmentation**](https://arxiv.org/abs/2608.09391)  
-  Yujia Sun, **Ningfeng Que**<sup>†</sup>, Peiting Shi, Rongrong Fu, Yingying Yang, Xinhang Li, Yin Dai  
-  <span class="pub-note">Bidirectional task interaction under a shared Swin encoder with continuous spatial coordinate queries.</span> <span class="show_paper_citations" data-title="CoInS-Net: A Continuous Position-Aware Network for Joint Medical Image Interpolation and Segmentation"></span>
-
-- <span class="pub-venue">arXiv 2026</span> [**StateXDiff: Cell State-Contextualized Multimodal Diffusion for Single-Cell Perturbation Prediction**](https://arxiv.org/abs/2605.16104)  
-  Peiting Shi, **Ningfeng Que**<sup>†</sup>, Xianzhe Huang, Xiaofei Wang, Jianzhong Jeff Xi  
-  <span class="pub-note">Cell-state-conditioned multimodal diffusion for predicting single-cell perturbation responses.</span> <span class="show_paper_citations" data-title="StateXDiff: Cell State-Contextualized Multimodal Diffusion for Single-Cell Perturbation Prediction"></span>
-
-- <span class="pub-venue">MICCAI 2025</span> [**Adaptive Spatial Transcriptomics Interpolation via Cross-modal Cross-slice Modeling**](https://arxiv.org/abs/2505.10729)  
-  **Ningfeng Que**, Xiaofei Wang, Jingjing Chen, Yixuan Jiang, Chao Li  
-  <span class="pub-note">C2-STi — **Early Accept**. The first method to interpolate missing ST slices at arbitrary intermediate positions, fusing paired H&E images through cross-modal alignment.</span> <span class="show_paper_citations" data-title="Adaptive Spatial Transcriptomics Interpolation via Cross-modal Cross-slice Modeling"></span> [\[code\]](https://github.com/XiaofeiWang2018/C2-STi)
-
-- <span class="pub-venue">PMB 2025</span> [**MLAR-UNet: LDCT image denoising based on U-Net with multiple lightweight attention-based modules and residual reinforcement**](https://doi.org/10.1088/1361-6560/adb19a)  
-  Hao Tang, **Ningfeng Que**<sup>†</sup>, Yanwen Tian, Mingzhe Li, Alessandro Perelli, Yueyang Teng  
-  <span class="pub-note">Lightweight attention modules plus residual reinforcement for low-dose CT denoising.</span> <span class="show_paper_citations" data-title="MLAR-UNet: LDCT image denoising based on U-Net with multiple lightweight attention-based modules and residual reinforcement"></span>
-
-- <span class="pub-venue">IJIST 2024</span> [**VTCNet: A Feature Fusion DL Model Based on CNN and ViT for the Classification of Cervical Cells**](https://doi.org/10.1002/ima.23161)  
-  Mingzhe Li, **Ningfeng Que**<sup>†</sup>, Juanhua Zhang, Pingfang Du, Yin Dai  
-  <span class="pub-note">CNN–ViT feature fusion for cervical cell classification.</span> <span class="show_paper_citations" data-title="VTCNet: A Feature Fusion DL Model Based on CNN and ViT for the Classification of Cervical Cells"></span>
-
-## Collaborative Work
-
-- <span class="pub-venue">bioRxiv 2026</span> [**Histology-aware Inference of Cell-cell Communication in Spatial Transcriptomics**](https://doi.org/10.64898/2026.01.22.701166)  
-  Xiaofei Wang, Chenyang Tao, Yu Jiang, Yixuan Jiang, Hanyu Liu, Zheng Jiang, Pinan Zhu, **Ningfeng Que**, Jianzhong Xi, Stephen Price, Bin Qian, Jian-Guo Xu, Chao Li  
-  <span class="pub-note">HARMONIC — a histology-aware graph learning framework for anatomically contextualized cell–cell communication inference.</span> <span class="show_paper_citations" data-title="Histology-aware Inference of Cell-cell Communication in Spatial Transcriptomics"></span>
-
-- <span class="pub-venue">AFM 2025</span> [**Advances in Hydrogel-Based Electronic Skins: From Material Design to Multifunctional Applications**](https://doi.org/10.1002/adfm.202527525)  
-  Deliang Li, **Ningfeng Que**, Hao Tang, Yanwen Tian, Chenxi Jing, Le Liu, Guanshi Liu, Hongxing Zhou, Wenwen Zhang, Hongguo Wei, Ye Tian  
-  <span class="pub-note">Review on hydrogel-based electronic skins, from material design to multifunctional applications.</span> <span class="show_paper_citations" data-title="Advances in Hydrogel-Based Electronic Skins: From Material Design to Multifunctional Applications"></span>
-
-- <span class="pub-venue">IJCAI 2024</span> [**Multi-scale Context-Aware Networks Based on Fragment Association for Human Activity Recognition**](https://doi.org/10.24963/ijcai.2024/351)  
-  Zhiqiong Wang, Hanyu Liu, Boyang Zhao, Qi Shen, Mingzhe Li, **Ningfeng Que**, Mingke Yan, Junchang Xin  
-  <span class="pub-note">Multi-scale context-aware modelling with fragment association for human activity recognition.</span> <span class="show_paper_citations" data-title="Multi-scale Context-Aware Networks Based on Fragment Association for Human Activity Recognition"></span>
-
-- <span class="pub-venue">CBM 2024</span> [**DesTrans: A medical image fusion method based on Transformer and improved DenseNet**](https://doi.org/10.1016/j.compbiomed.2024.108463)  
-  Yumeng Song, Yin Dai, Weibin Liu, Yue Liu, Xinpeng Liu, Qiming Yu, Xinghan Liu, **Ningfeng Que**, Mingzhe Li  
-  <span class="pub-note">Transformer plus improved DenseNet for medical image fusion.</span> <span class="show_paper_citations" data-title="DesTrans: A medical image fusion method based on Transformer and improved DenseNet"></span>
+{% include publications.html %}
 
 # 📖 Educations
 

@@ -113,33 +113,62 @@ h1:before, .anchor:before {
  * 论文条目由 _pages/about.md 手写，这里只负责徽章、注释和引用数样式。
  * ------------------------------------------------------------------ */
 
-/* 会议 / 期刊徽章，例如 「MICCAI 2025」 */
-.pub-venue {
-    display: inline-block;
-    padding: 0 .5em;
-    margin-right: .45em;
-    border-radius: 3px;
-    background-color: #00369f;
-    color: #fff;
-    font-size: .72em;
-    font-weight: 600;
-    line-height: 1.8;
-    vertical-align: .12em;
-    letter-spacing: .02em;
-    white-space: nowrap;
+/* ------------------------------------------------------------------
+ * Publications
+ * 由 _data/publications.yml + _includes/publications.html 渲染。
+ * ------------------------------------------------------------------ */
+
+/* 论文标题：加粗、稍大，链接色与主题一致 */
+.pub-title {
+    margin-bottom: .35em;
+    font-size: 1.02em;
+    line-height: 1.4;
+
+    a {
+        color: #224b8d;
+        font-weight: 700;
+    }
 }
 
-/* 论文后面那句一句话说明 */
+/* 作者行：正文大小，允许自然换行 */
+.pub-authors {
+    margin-bottom: .35em;
+    font-size: .92em;
+    line-height: 1.6;
+    color: #494e52;
+
+    /* † 共同一作、✉ 通讯作者：蓝色加粗，一眼能认出来 */
+    sup {
+        font-size: .72em;
+        margin-left: .12em;
+        color: #00369f;
+        font-weight: 700;
+    }
+}
+
+/* 期刊 / 会议全称那一行，全称本身加粗 */
+.pub-meta {
+    margin-bottom: .35em;
+    font-size: .92em;
+    color: #494e52;
+
+    strong {
+        color: #00369f;
+    }
+}
+
+/* 一句话说明 */
 .pub-note {
-    color: #555;
-    font-size: .93em;
+    color: #666;
+    font-size: .9em;
+    line-height: 1.6;
 }
 
 /* 引用数由 fetch_google_scholar_stats.html 填充；没抓到时保持为空，
    配合下面的 :empty 规则就不会留下一个孤零零的分隔符。 */
 .show_paper_citations {
     color: #777;
-    font-size: .88em;
+    font-size: .95em;
     white-space: nowrap;
 }
 
@@ -147,7 +176,13 @@ h1:before, .anchor:before {
     content: "| ";
 }
 
-/* 论文列表条目之间留点呼吸感 */
-.page__content > ul > li {
-    margin-bottom: .15em;
+/* ------------------------------------------------------------------
+ * 侧边栏文字自动换行
+ *
+ * 主题的 _sass/_sidebar.scss 给 .author__urls li 设了 white-space: nowrap，
+ * 单位名一长（例如 State Key Laboratory of Natural and Biomimetic Drugs）
+ * 就会溢出侧栏并与相邻条目重叠。这里改回正常换行。
+ * ------------------------------------------------------------------ */
+.author__urls li {
+    white-space: normal;
 }

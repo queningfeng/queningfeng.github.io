@@ -125,11 +125,20 @@ def main() -> int:
         print("Node.js not found; set NODE_BIN or add node to PATH.")
         return 2
 
-    about = (ROOT / "_pages" / "about.md").read_text(encoding="utf-8")
-    titles = re.findall(r'data-title="([^"]+)"', about)
+    papers = (ROOT / "_data" / "publications.yml").read_text(encoding="utf-8")
+    titles = re.findall(r'^\s*title:\s*"([^"]+)"', papers, flags=re.MULTILINE)
     if not titles:
-        print("no data-title attributes found in _pages/about.md")
+        print("no titles found in _data/publications.yml")
         return 2
+
+    # A paper can declare that the feed cannot know about it yet (a brand-new
+    # acceptance). Flag those separately instead of reporting a false failure.
+    pending = set()
+    for block in re.split(r"^\s*-\s+group:", papers, flags=re.MULTILINE)[1:]:
+        if re.search(r"^\s*not_in_feed:\s*true", block, flags=re.MULTILINE):
+            match = re.search(r'^\s*title:\s*"([^"]+)"', block, flags=re.MULTILINE)
+            if match:
+                pending.add(match.group(1))
 
     tc.INCLUDE = ROOT / "_includes" / "fetch_google_scholar_stats.html"
     output = tc.run_apply_data(node, live, titles)
@@ -142,22 +151,29 @@ def main() -> int:
     print(f"#total_cit will render as: {output['total']!r}\n")
 
     matched = 0
+    pending_seen = 0
     for title, result in zip(titles, output["papers"]):
         if result:
             matched += 1
+        elif title in pending:
+            pending_seen += 1
+            print(f"  [--  ] {'(not indexed yet)':<20} {title[:58]}")
+            continue
         flag = "OK  " if result else "MISS"
         print(f"  [{flag}] {result or '(nothing shown)':<20} {title[:58]}")
 
-    print(f"\nmatched {matched}/{len(titles)} papers")
-    if matched != len(titles):
+    expected = len(titles) - len(pending)
+    print(f"\nmatched {matched}/{expected} indexed papers"
+          + (f" ({pending_seen} not in the feed yet)" if pending_seen else ""))
+    if matched != expected:
         print("\nUnmatched titles -- either the paper is absent from the feed, or")
-        print("the title in about.md differs from the one the source reports:")
+        print("the title in _data/publications.yml differs from what the source reports:")
         for title, result in zip(titles, output["papers"]):
-            if not result:
+            if not result and title not in pending:
                 print(f"  - {title}")
         return 1
 
-    print("every paper resolved to a citation count.")
+    print("every indexed paper resolved to a citation count.")
     return 0
 
 

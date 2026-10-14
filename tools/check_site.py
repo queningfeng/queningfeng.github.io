@@ -161,17 +161,64 @@ def test_no_placeholders() -> None:
 
 
 def test_paper_titles() -> None:
-    print("\n[6] 论文条目的 data-title")
+    print("\n[6] 论文数据（_data/publications.yml）")
+
+    data = load_text("_data/publications.yml")
+    titles = re.findall(r'^\s*title:\s*"([^"]+)"', data, flags=re.MULTILINE)
+    figures = re.findall(r'^\s*figure:\s*"([^"]+)"', data, flags=re.MULTILINE)
+    authors = re.findall(r"^\s*authors_html:\s*'([^']+)'", data, flags=re.MULTILINE)
+    groups = re.findall(r"^\s*-?\s*group:\s*(\S+)", data, flags=re.MULTILINE)
+
+    check(len(titles) == 11, f"共 11 篇论文（实际 {len(titles)}）")
+    check(len(set(titles)) == len(titles), "论文标题没有重复")
+    check(all(title.strip() for title in titles), "没有空标题")
+    check(len(figures) == len(titles), f"每篇都配了框架图（{len(figures)} 张）")
+    check(len(authors) == len(titles), f"每篇都有作者列表（{len(authors)} 条）")
+    check(
+        groups.count("first") == 6 and groups.count("collaborative") == 5,
+        f"分组为 6 篇一作/共同一作 + 5 篇合作（实际 {groups}）",
+    )
+
+    for figure in figures:
+        check((ROOT / figure).exists(), f"{figure} 存在")
+
+    for title, author_html in zip(titles, authors):
+        check(
+            "<strong>Ningfeng Que</strong>" in author_html,
+            f"作者本人加粗：{title[:36]}",
+        )
+        check("✉" in author_html, f"标了通讯作者：{title[:36]}")
+
+    # 共同一作标记只该出现在一作组里，合作论文里作者本人不该被标成共一
+    first_block = data.split("- group: collaborative")[0]
+    collab_block = data.split("- group: collaborative", 1)[1] if "- group: collaborative" in data else ""
+    check("<strong>Ningfeng Que</strong><sup>†</sup>" in first_block,
+          "一作组里作者本人带共同一作标记")
+    check("<strong>Ningfeng Que</strong><sup>†</sup>" not in collab_block,
+          "合作组里作者本人不带共同一作标记")
+
+
+def test_publications_include_is_wired() -> None:
+    print("\n[6b] 论文渲染模板")
 
     about = load_text("_pages/about.md")
-    titles = re.findall(r'data-title="([^"]+)"', about)
-    check(len(titles) == 10, f"共 10 篇论文（实际 {len(titles)}）")
-    check(len(set(titles)) == len(titles), "没有重复的 data-title")
-    check(all(title.strip() for title in titles), "没有空的 data-title")
-    check(
-        about.count('class="show_paper_citations"') == len(titles),
-        "每个 data-title 都挂在一个 show_paper_citations 上",
-    )
+    check("{% include publications.html %}" in about, "about.md 引用 publications.html")
+    check("# 📝 Publications" in about, "about.md 里有 Publications 标题")
+    # 旧的手写列表必须已经删掉，否则会和模板渲染重复
+    check('class="pub-venue"' not in about, "about.md 里没有遗留的手写论文条目")
+
+    include = load_text("_includes/publications.html")
+    check("site.data.publications" in include, "模板读取 _data/publications.yml")
+    check("data-title" in include, "模板渲染了引用数所需的 data-title")
+    check("paper-box" in include, "模板使用了左右布局的 paper-box")
+    check("paper.authors_html" in include, "模板输出作者列表（不转义 HTML）")
+    check("venue_full" in include, "模板输出期刊全称")
+
+    css = load_text("assets/css/main.scss")
+    check(".author__urls li" in css and "white-space: normal" in css,
+          "侧边栏长文本已改为自动换行")
+    for selector in [".pub-title", ".pub-authors", ".pub-meta", ".pub-note"]:
+        check(selector in css, f"样式里有 {selector}")
 
 
 def test_config_keys() -> None:
@@ -211,7 +258,7 @@ def test_yaml_shape() -> None:
         r")"
     )
 
-    for target in ["_config.yml", "_data/navigation.yml"]:
+    for target in ["_config.yml", "_data/navigation.yml", "_data/publications.yml"]:
         text = load_text(target)
         bad_indent = []
         bad_shape = []
@@ -254,6 +301,7 @@ def main() -> int:
     test_liquid_balance()
     test_no_placeholders()
     test_paper_titles()
+    test_publications_include_is_wired()
     test_config_keys()
     test_yaml_shape()
 
