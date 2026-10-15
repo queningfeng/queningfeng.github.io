@@ -2,22 +2,29 @@
 # 新增一篇论文 = 在下面加一条，不用碰 HTML。
 #
 # 字段：
-#   group        first（一作/共同一作）| collaborative（合作）
+#   topic        分类（决定放在哪一节下）：
+#                  st      空间转录组与计算病理
+#                  vcell   虚拟细胞扰动建模
+#                  imaging 医学图像分析
+#                  other   其他合作
+#   date         "YYYY-MM-DD" 或 "YYYY-MM"。**组内按它倒序排列**（新的在前）。
+#   role         作者角色，显示在期刊名后面：First author / Co-first author / Co-author
 #   badge        左图左上角的小徽章（短标签）
 #   venue_full   期刊/会议**全称**，页面上加粗
 #   venue_extra  补充说明（Early Accept 之类），可省略
 #   title        论文标题，加粗并作为链接文字
-#   url          链接；留空则只显示粗体标题
+#   url          论文链接；留空则只显示粗体标题
 #   authors_html 作者列表（HTML）：<strong> 加粗，<sup>†</sup> 共同一作，<sup>✉</sup> 通讯作者
 #   note         一句话说明
 #   figure       框架图（images/papers/ 下）
-#   links        额外链接（HTML），可省略
+#   links        额外链接（HTML）；有公开代码的论文都写了 github 地址
+#   citation_titles  可选。预印本改名后 Google Scholar 还挂旧标题时，把旧标题写在这里，
+#                    引用数照样能匹配上（页面上显示的仍是新标题）。
 #
 # 图例：† 共同一作（equal contribution）　✉ 通讯作者（corresponding author）
 #
 # ===========================================================================
-# 共同一作 / 通讯作者的核实情况（逐个 PDF 首页的作者行读出）
-#   每行末尾的符号就是论文自己标的，不是我推断的。
+# 共同一作 / 通讯作者的核实情况（逐个 PDF 首页的作者行读出，并与 Google Scholar 对照）
 #
 #   C2-STi        Que^{1,2,*}, Wang^{3,*}          -> 共一 2 人；通讯 Chao Li^{✉}
 #   StateXDiff    Shi^{1,†}, Que^{1,†}             -> 共一 2 人；通讯 Xi^{1,*}
@@ -25,51 +32,65 @@
 #                 末尾 Xi^{2†}; Wang^{6†}; Li^{1,3,7,8†} -> 共同通讯 3 人
 #   HARMONIC      Wang^{1†}; Tao^{1†}; Jiang^{2†}  -> 共一 3 人；
 #                 末尾 Qian^{8†}; Xu^{2†}; Li^{1,4,7,8†}  -> 共同通讯 3 人
+#   CoInS-Net     arXiv 作者行无共一符号，但 Google Scholar 与作者本人均确认是共一
 #   IJCAI 2024    Wang^{1,&}, Liu^{1,&}            -> 共一 2 人；通讯 Xin^{2,*}
-#   DesTrans      Song^{a} 唯一一作                 -> 通讯 Dai^{a,b,*}
-#   Hydrogel      Li 唯一一作                       -> "Correspondence: Ye Tian"
-#   VTCNet        论文作者行**没有**共一标记         -> "Correspondence: Yin Dai"
-#   OncoRelay3D   Li 唯一一作                       -> 通讯 Li^{2,5,6,7,*}
+#   VTCNet        PDF 作者行无共一符号，但 Google Scholar 写作 "Mingzhe Li†, Ningfeng Que†"
+#   MLAR-UNet     PDF 第 1 页是 IOP 封面页看不到作者块；Scholar 写作 "Hao Tang†, Ningfeng Que†"
+#                 通讯作者按末位作者填 Yueyang Teng
+#   DesTrans      Song 唯一一作 -> 通讯 Dai^{a,b,*}
+#   Hydrogel      Li 唯一一作   -> "Correspondence: Ye Tian"
+#   OncoRelay3D   Li 唯一一作   -> 通讯 Li^{2,5,6,7,*}
 #
-#   ⚠️ 三处与论文标注不一致，需要你确认（我暂按你说的"是共同一作"处理）：
-#     1. CoInS-Net：arXiv 作者行只有 Yin Dai^{*,✉}，没有共一符号
-#     2. VTCNet  ：Wiley 作者行没有共一符号，只写了 Correspondence: Yin Dai
-#     3. MLAR-UNet：第 1 页是 IOP 封面页，看不到作者块。
-#                  通讯作者我按"末位作者"暂填 Yueyang Teng —— 请核对
+# 代码仓库来源：PDF / arXiv 正文里写的 "code is available at"，或按标题在 GitHub 搜到、
+# 并与一作账号名对得上（haot2025 = Hao Tang、LHY1007 = Hanyu Liu）。
+# 没有找到公开代码的论文（CoInS-Net、StateXDiff、HARMONIC、IJCAI、DesTrans、Hydrogel）不写 links。
 # ===========================================================================
 
-- group: first
+# ---------------------------------------------------------------- 空间转录组
+- topic: st
+  date: "2026-10-12"
+  role: Co-first author
   badge: "bioRxiv 2026"
   venue_full: "bioRxiv (preprint)"
   title: "Coordinated Enhancement of Molecular and Spatial Fidelity for Biological Inference in Spatial Transcriptomics"
   url: "https://doi.org/10.64898/2025.12.23.696267"
   authors_html: 'Xiaofei Wang<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Hanyu Liu<sup>†</sup>, Chen-Yang Tao, Yu Jiang, Yi-Xuan Jiang, Pinan Zhu, Jian-Guo Xu, Han Yan, Bing Ye, Stephen J. Price, Jianzhong Jeff Xi<sup>✉</sup>, Xinjie Wang<sup>✉</sup>, <strong>Chao Li</strong><sup>✉</sup>'
-  note: "FOCUS — a multimodal generative foundation model for coordinated spatial transcriptomics enhancement."
+  note: "FOCUS — a multimodal generative foundation model that jointly corrects the coupled resolution, sensitivity, alignment and cell-level-fidelity limits of spatial transcriptomics."
   figure: "images/papers/focus.png"
-  # 这篇在 bioRxiv 升到 v3 时改了标题，但 Google Scholar 上还挂着旧标题。
-  # 这里列出旧标题，让引用数据仍能匹配上（页面上显示的仍是新标题）。
+  links: '[<a href="https://github.com/LHY1007/FOCUS">code</a>]'
   citation_titles:
     - "A Foundational Generative Model for Cross-platform Unified Enhancement of Spatial Transcriptomics"
 
-- group: first
-  badge: "arXiv 2026"
-  venue_full: "arXiv (preprint)"
-  title: "CoInS-Net: A Continuous Position-Aware Network for Joint Medical Image Interpolation and Segmentation"
-  url: "https://arxiv.org/abs/2608.09391"
-  authors_html: 'Yujia Sun<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Peiting Shi, Rongrong Fu, Yingying Yang, Xinhang Li, <strong>Yin Dai</strong><sup>✉</sup>'
-  note: "Bidirectional task interaction under a shared Swin encoder with continuous spatial coordinate queries."
-  figure: "images/papers/coinsnet.png"
+- topic: st
+  date: "2026-10-12"
+  role: Co-author
+  badge: "bioRxiv 2026"
+  venue_full: "bioRxiv (preprint)"
+  title: "Histology-aware Inference of Cell-cell Communication in Spatial Transcriptomics"
+  url: "https://doi.org/10.64898/2026.01.22.701166"
+  authors_html: 'Xiaofei Wang<sup>†</sup>, Chenyang Tao<sup>†</sup>, Yu Jiang<sup>†</sup>, Yixuan Jiang, Hanyu Liu, Zheng Jiang, Pinan Zhu, <strong>Ningfeng Que</strong>, Jianzhong Xi, Stephen Price, Binzhi Qian<sup>✉</sup>, Jian-Guo Xu<sup>✉</sup>, <strong>Chao Li</strong><sup>✉</sup>'
+  note: "HARMONIC — a histology-aware graph learning framework for anatomically contextualized cell–cell communication inference."
+  figure: "images/papers/harmonic.png"
+  citation_titles:
+    - "Histology-Aware Graph for Modeling Intercellular Communication in Spatial Transcriptomics"
 
-- group: first
-  badge: "arXiv 2026"
-  venue_full: "arXiv (preprint)"
-  title: "StateXDiff: Cell State-Contextualized Multimodal Diffusion for Single-Cell Perturbation Prediction"
-  url: "https://arxiv.org/abs/2605.16104"
-  authors_html: 'Peiting Shi<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Xianzhe Huang, Xiaofei Wang, <strong>Jianzhong Jeff Xi</strong><sup>✉</sup>'
-  note: "Cell-state-conditioned multimodal diffusion for predicting single-cell perturbation responses."
-  figure: "images/papers/statexdiff.png"
+- topic: st
+  # MICCAI 2026 的确切日期还没公布，先按 10 月排；想换顺序改这一行即可。
+  date: "2026-10-15"
+  role: Co-author
+  badge: "MICCAI 2026"
+  venue_full: "Medical Image Computing and Computer Assisted Intervention (MICCAI)"
+  venue_extra: "CMMCA Workshop"
+  title: "OncoRelay3D: Foundation-Model-Assisted Reconstruction of 3D Tumor Cell-Expression Fields for Mechanism-Aware Directed Cell-Cell Communication"
+  url: ""
+  authors_html: 'Zhitong Li, Yixuan Jiang, Ziming Liu, Chenjie Wu, <strong>Ningfeng Que</strong>, <strong>Chao Li</strong><sup>✉</sup>'
+  note: "Reconstructs a continuous 3D tumour cell-expression field from H&E and ST sections, then infers mechanism-aware directed cell–cell communication on it."
+  figure: "images/papers/oncorelay3d.png"
+  links: '[<a href="https://github.com/cynthia0122109-cyber/OncoRelay3D">code</a>]'
 
-- group: first
+- topic: st
+  date: "2025-05-15"
+  role: Co-first author
   badge: "MICCAI 2025"
   venue_full: "Medical Image Computing and Computer Assisted Intervention (MICCAI)"
   venue_extra: "Early Accept"
@@ -80,7 +101,33 @@
   figure: "images/papers/c2-sti.png"
   links: '[<a href="https://github.com/XiaofeiWang2018/C2-STi">code</a>]'
 
-- group: first
+# ---------------------------------------------------------------- 虚拟细胞扰动
+- topic: vcell
+  date: "2026-05"
+  role: Co-first author
+  badge: "arXiv 2026"
+  venue_full: "arXiv (preprint)"
+  title: "StateXDiff: Cell State-Contextualized Multimodal Diffusion for Single-Cell Perturbation Prediction"
+  url: "https://arxiv.org/abs/2605.16104"
+  authors_html: 'Peiting Shi<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Xianzhe Huang, Xiaofei Wang, <strong>Jianzhong Jeff Xi</strong><sup>✉</sup>'
+  note: "Cell-state-conditioned multimodal diffusion that predicts how single cells respond to genetic and chemical perturbation."
+  figure: "images/papers/statexdiff.png"
+
+# ---------------------------------------------------------------- 医学图像分析
+- topic: imaging
+  date: "2026-08-10"
+  role: Co-first author
+  badge: "arXiv 2026"
+  venue_full: "arXiv (preprint)"
+  title: "CoInS-Net: A Continuous Position-Aware Network for Joint Medical Image Interpolation and Segmentation"
+  url: "https://arxiv.org/abs/2608.09391"
+  authors_html: 'Yujia Sun<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Peiting Shi, Rongrong Fu, Yingying Yang, Xinhang Li, <strong>Yin Dai</strong><sup>✉</sup>'
+  note: "Bidirectional task interaction under a shared Swin encoder with continuous spatial coordinate queries."
+  figure: "images/papers/coinsnet.png"
+
+- topic: imaging
+  date: "2025-02"
+  role: Co-first author
   badge: "PMB 2025"
   venue_full: "Physics in Medicine &amp; Biology"
   title: "MLAR-UNet: LDCT image denoising based on U-Net with multiple lightweight attention-based modules and residual reinforcement"
@@ -88,8 +135,11 @@
   authors_html: 'Hao Tang<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Yanwen Tian, Mingzhe Li, Alessandro Perelli, <strong>Yueyang Teng</strong><sup>✉</sup>'
   note: "Lightweight attention modules plus residual reinforcement for low-dose CT denoising."
   figure: "images/papers/mlar-unet.png"
+  links: '[<a href="https://github.com/haot2025/MLAR-UNet-LDCT-Denoising">code</a>]'
 
-- group: first
+- topic: imaging
+  date: "2024-08-27"
+  role: Co-first author
   badge: "IJIST 2024"
   venue_full: "International Journal of Imaging Systems and Technology"
   title: "VTCNet: A Feature Fusion DL Model Based on CNN and ViT for the Classification of Cervical Cells"
@@ -97,30 +147,23 @@
   authors_html: 'Mingzhe Li<sup>†</sup>, <strong>Ningfeng Que</strong><sup>†</sup>, Juanhua Zhang, Pingfang Du, <strong>Yin Dai</strong><sup>✉</sup>'
   note: "CNN–ViT feature fusion for cervical cell classification."
   figure: "images/papers/vtcnet.png"
+  links: '[<a href="https://github.com/Camellia-0892/VTCNet">code</a>]'
 
-- group: collaborative
-  badge: "MICCAI 2026"
-  venue_full: "Medical Image Computing and Computer Assisted Intervention (MICCAI)"
-  venue_extra: "CMMCA Workshop"
-  title: "OncoRelay3D: Foundation-Model-Assisted Reconstruction of 3D Tumor Cell-Expression Fields for Mechanism-Aware Directed Cell-Cell Communication"
-  url: ""
-  authors_html: 'Zhitong Li, Yixuan Jiang, Ziming Liu, Chenjie Wu, <strong>Ningfeng Que</strong>, <strong>Chao Li</strong><sup>✉</sup>'
-  note: "Reconstructs a continuous 3D tumour cell-expression field from H&E and ST sections, then infers mechanism-aware directed cell–cell communication on it."
-  figure: "images/papers/oncorelay3d.png"
+- topic: imaging
+  date: "2024-05"
+  role: Co-author
+  badge: "CBM 2024"
+  venue_full: "Computers in Biology and Medicine"
+  title: "DesTrans: A medical image fusion method based on Transformer and improved DenseNet"
+  url: "https://doi.org/10.1016/j.compbiomed.2024.108463"
+  authors_html: 'Yumeng Song, <strong>Yin Dai</strong><sup>✉</sup>, Weibin Liu, Yue Liu, Xinpeng Liu, Qiming Yu, Xinghan Liu, <strong>Ningfeng Que</strong>, Mingzhe Li'
+  note: "Transformer plus improved DenseNet for medical image fusion."
+  figure: "images/papers/destrans.png"
 
-- group: collaborative
-  badge: "bioRxiv 2026"
-  venue_full: "bioRxiv (preprint)"
-  title: "Histology-aware Inference of Cell-cell Communication in Spatial Transcriptomics"
-  url: "https://doi.org/10.64898/2026.01.22.701166"
-  authors_html: 'Xiaofei Wang<sup>†</sup>, Chenyang Tao<sup>†</sup>, Yu Jiang<sup>†</sup>, Yixuan Jiang, Hanyu Liu, Zheng Jiang, Pinan Zhu, <strong>Ningfeng Que</strong>, Jianzhong Xi, Stephen Price, Binzhi Qian<sup>✉</sup>, Jian-Guo Xu<sup>✉</sup>, <strong>Chao Li</strong><sup>✉</sup>'
-  note: "HARMONIC — a histology-aware graph learning framework for anatomically contextualized cell–cell communication inference."
-  figure: "images/papers/harmonic.png"
-  # 同样在 v3 改过名，Google Scholar 上仍是旧标题。
-  citation_titles:
-    - "Histology-Aware Graph for Modeling Intercellular Communication in Spatial Transcriptomics"
-
-- group: collaborative
+# ---------------------------------------------------------------- 其他合作
+- topic: other
+  date: "2026-01"
+  role: Co-author
   badge: "AFM 2026"
   venue_full: "Advanced Functional Materials"
   title: "Advances in Hydrogel-Based Electronic Skins: From Material Design to Multifunctional Applications"
@@ -129,20 +172,13 @@
   note: "Review on hydrogel-based electronic skins, from material design to multifunctional applications."
   figure: "images/papers/hydrogel-esk.png"
 
-- group: collaborative
+- topic: other
+  date: "2024-08"
+  role: Co-author
   badge: "IJCAI 2024"
   venue_full: "International Joint Conference on Artificial Intelligence (IJCAI)"
   title: "Multi-scale Context-Aware Networks Based on Fragment Association for Human Activity Recognition"
   url: "https://doi.org/10.24963/ijcai.2024/351"
   authors_html: 'Zhiqiong Wang<sup>†</sup>, Hanyu Liu<sup>†</sup>, Boyang Zhao, Qi Shen, Mingzhe Li, <strong>Ningfeng Que</strong>, Mingke Yan, <strong>Junchang Xin</strong><sup>✉</sup>'
-  note: "Multi-scale context-aware modelling with fragment association for human activity recognition."
+  note: "Multi-scale context-aware modelling with fragment association for human activity recognition from wearable sensor signals."
   figure: "images/papers/ijcai-har.png"
-
-- group: collaborative
-  badge: "CBM 2024"
-  venue_full: "Computers in Biology and Medicine"
-  title: "DesTrans: A medical image fusion method based on Transformer and improved DenseNet"
-  url: "https://doi.org/10.1016/j.compbiomed.2024.108463"
-  authors_html: 'Yumeng Song, <strong>Yin Dai</strong><sup>✉</sup>, Weibin Liu, Yue Liu, Xinpeng Liu, Qiming Yu, Xinghan Liu, <strong>Ningfeng Que</strong>, Mingzhe Li'
-  note: "Transformer plus improved DenseNet for medical image fusion."
-  figure: "images/papers/destrans.png"

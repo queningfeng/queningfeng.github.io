@@ -24,10 +24,11 @@ I am a Ph.D. student at the **State Key Laboratory of Natural and Biomimetic Dru
 <!-- TODO 可选：把你的导师名字加进来，例如
      advised by Prof. XXX, and previously worked with Prof. Yin Dai and Prof. Yueyang Teng at Northeastern University. -->
 
-My research sits at the intersection of **spatial transcriptomics**, **computational pathology** and **medical image analysis**. I build multimodal and generative models that recover the molecular and spatial information current spatial omics platforms cannot measure directly, and I care about making these models reliable enough for downstream biological discovery. Concretely, I work on:
+My research sits at the intersection of **spatial transcriptomics**, **computational pathology**, **virtual cell modelling** and **medical image analysis**. I build multimodal and generative models that recover the molecular and spatial information current spatial omics platforms cannot measure directly, and I care about making these models reliable enough for downstream biological discovery. Concretely, I work on:
 
 - **Spatial transcriptomics interpolation and enhancement** — reconstructing missing tissue sections, and coordinating molecular / spatial fidelity across platforms.
 - **Histology-aware spatial modelling** — using paired H&E images as an explicit anatomical constraint for cell–cell communication inference.
+- **Virtual cell perturbation prediction** — diffusion-based multimodal models of how single cells respond to genetic and chemical perturbation, the line of work opened by virtual-cell models such as STATE and UniPert.
 - **Cross-modal medical image analysis** — joint interpolation and segmentation, low-dose CT denoising, and medical image fusion.
 
 I have published **11** peer-reviewed papers and preprints, including an **early-accepted MICCAI 2025** paper as co-first author. My total <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'>Google Scholar citations <strong><span id='total_cit'>—</span></strong></a> are updated automatically every day. You can also use the Google Scholar badge <a href='https://scholar.google.com/citations?user=ZxrkoP4AAAAJ'><img src="https://img.shields.io/endpoint?url={{ url | url_encode }}&logo=Google%20Scholar&labelColor=f6f6f6&color=9cf&style=flat&label=citations&cacheSeconds=1800" alt="Google Scholar citations"></a>.
@@ -36,8 +37,8 @@ I am always happy to discuss research and open to collaboration — feel free to
 
 # 🔥 News
 - *2026.10*: &nbsp;🎉 **OncoRelay3D**, a foundation-model-assisted framework that reconstructs 3D tumour cell-expression fields for mechanism-aware directed cell–cell communication, is accepted to **MICCAI 2026**.
-- *2026.10*: &nbsp;🎉 Our spatial transcriptomics enhancement foundation model **FOCUS** is updated on bioRxiv (v3) and retitled *Coordinated Enhancement of Molecular and Spatial Fidelity for Biological Inference in Spatial Transcriptomics*.
-- *2026.10*: &nbsp;📄 **HARMONIC**, our histology-aware graph framework for cell–cell communication inference, is updated on bioRxiv (v3).
+- *2026.10*: &nbsp;🎉 **Coordinated Enhancement of Molecular and Spatial Fidelity for Biological Inference in Spatial Transcriptomics** is released on bioRxiv (v3).
+- *2026.10*: &nbsp;📄 **Histology-aware Inference of Cell-cell Communication in Spatial Transcriptomics** is released on bioRxiv (v3).
 - *2026.08*: &nbsp;🎉 **CoInS-Net**, a continuous position-aware network for joint medical image interpolation and segmentation, is released on arXiv. *(co-first author)*
 - *2026.05*: &nbsp;🎉 **StateXDiff**, a cell state-contextualized multimodal diffusion model for single-cell perturbation prediction, is released on arXiv. *(co-first author)*
 - *2025.12*: &nbsp;📄 Our multimodal generative foundation model for cross-platform spatial transcriptomics enhancement is released on bioRxiv. *(co-first author)*

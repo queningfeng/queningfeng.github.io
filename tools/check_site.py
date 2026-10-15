@@ -167,16 +167,30 @@ def test_paper_titles() -> None:
     titles = re.findall(r'^\s*title:\s*"([^"]+)"', data, flags=re.MULTILINE)
     figures = re.findall(r'^\s*figure:\s*"([^"]+)"', data, flags=re.MULTILINE)
     authors = re.findall(r"^\s*authors_html:\s*'([^']+)'", data, flags=re.MULTILINE)
-    groups = re.findall(r"^\s*-?\s*group:\s*(\S+)", data, flags=re.MULTILINE)
+    topics = re.findall(r"^\s*-?\s*topic:\s*(\S+)", data, flags=re.MULTILINE)
+    dates = re.findall(r'^\s*date:\s*"([^"]+)"', data, flags=re.MULTILINE)
+    roles = re.findall(r"^\s*role:\s*(.+?)\s*$", data, flags=re.MULTILINE)
+    links = re.findall(r"^\s*links:\s*'([^']+)'", data, flags=re.MULTILINE)
 
     check(len(titles) == 11, f"共 11 篇论文（实际 {len(titles)}）")
     check(len(set(titles)) == len(titles), "论文标题没有重复")
     check(all(title.strip() for title in titles), "没有空标题")
     check(len(figures) == len(titles), f"每篇都配了框架图（{len(figures)} 张）")
     check(len(authors) == len(titles), f"每篇都有作者列表（{len(authors)} 条）")
+    check(len(dates) == len(titles), "每篇都有 date（用于组内排序）")
+    check(len(roles) == len(titles), "每篇都标了 role（一作 / 共同一作 / 合作）")
+
     check(
-        groups.count("first") == 6 and groups.count("collaborative") == 5,
-        f"分组为 6 篇一作/共同一作 + 5 篇合作（实际 {groups}）",
+        topics.count("st") == 4
+        and topics.count("vcell") == 1
+        and topics.count("imaging") == 4
+        and topics.count("other") == 2,
+        "分类：空间转录 4 / 虚拟细胞扰动 1 / 医学影像 4 / 其他 2"
+        f"（实际 {topics}）",
+    )
+    check(
+        all(re.match(r"^\d{4}-\d{2}(-\d{2})?$", value) for value in dates),
+        "date 都是 YYYY-MM 或 YYYY-MM-DD",
     )
 
     for figure in figures:
@@ -189,13 +203,16 @@ def test_paper_titles() -> None:
         )
         check("✉" in author_html, f"标了通讯作者：{title[:36]}")
 
-    # 共同一作标记只该出现在一作组里，合作论文里作者本人不该被标成共一
-    first_block = data.split("- group: collaborative")[0]
-    collab_block = data.split("- group: collaborative", 1)[1] if "- group: collaborative" in data else ""
-    check("<strong>Ningfeng Que</strong><sup>†</sup>" in first_block,
-          "一作组里作者本人带共同一作标记")
-    check("<strong>Ningfeng Que</strong><sup>†</sup>" not in collab_block,
-          "合作组里作者本人不带共同一作标记")
+    for link in links:
+        check("github.com/" in link, f"代码链接指向 GitHub：{link[:70]}")
+    check(len(links) == 5, f"5 篇写明了公开代码（实际 {len(links)}）")
+
+    # “其他合作”那两篇（材料综述、人体活动识别）里作者不是共同一作
+    other_block = data.split("- topic: other", 1)[1] if "- topic: other" in data else ""
+    check(
+        "<strong>Ningfeng Que</strong><sup>†</sup>" not in other_block,
+        "其他合作组里作者本人不带共同一作标记",
+    )
 
 
 def test_publications_include_is_wired() -> None:
@@ -209,6 +226,12 @@ def test_publications_include_is_wired() -> None:
 
     include = load_text("_includes/publications.html")
     check("site.data.publications" in include, "模板读取 _data/publications.yml")
+    check('where: "topic"' in include, "模板按研究类别分节")
+    check('sort: "date"' in include, "模板每组按日期排序")
+    check("reverse" in include, "新的论文排在前面")
+    for key in ["st", "vcell", "imaging", "other"]:
+        check(f"{key}|" in include, f"模板里定义了分类 {key}")
+    check("paper.role" in include, "模板输出作者角色（一作/共同一作/合作）")
     check("data-title" in include, "模板渲染了引用数所需的 data-title")
     check("data-title-alt" in include, "模板支持候选标题（预印本改名的情况）")
     check("paper-box" in include, "模板使用了左右布局的 paper-box")

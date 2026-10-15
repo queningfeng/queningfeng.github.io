@@ -1,18 +1,25 @@
 {%- comment -%}
-  渲染 _data/publications.yml。新增论文只需改那个 YAML，不用碰这个文件。
-  每条论文用主题自带的 .paper-box 布局：宽屏时图在左、文字在右。
+  渲染 _data/publications.yml。
+
+  * 按研究类别（topic）分节；
+  * 每节内部按 date 倒序（新的在前）；
+  * 每条用主题自带的 .paper-box 布局：宽屏时图在左、文字在右。
+
+  新增论文或调整分类只需改 YAML，不用碰这个文件。
 {%- endcomment -%}
 
-{%- assign group_specs = "first|First-author & Co-first-author Work,collaborative|Collaborative Work" | split: "," -%}
+{%- assign topic_specs = "st|Spatial Transcriptomics & Computational Pathology,vcell|Virtual Cell Perturbation Modelling,imaging|Medical Image Analysis,other|Other Collaborations" | split: "," -%}
 
-{%- for spec in group_specs -%}
+{%- for spec in topic_specs -%}
   {%- assign parts = spec | split: "|" -%}
-  {%- assign group_key = parts[0] -%}
+  {%- assign topic_key = parts[0] -%}
+  {%- assign papers = site.data.publications | where: "topic", topic_key | sort: "date" | reverse -%}
+
+{%- if papers.size > 0 %}
 
 ## {{ parts[1] }}
 
-{%- for paper in site.data.publications -%}
-{%- if paper.group == group_key %}
+{%- for paper in papers %}
 
 <div class="paper-box">
   <div class="paper-box-image">
@@ -24,12 +31,12 @@
   <div class="paper-box-text">
     <p class="pub-title">{% if paper.url and paper.url != "" %}<a href="{{ paper.url }}">{{ paper.title }}</a>{% else %}{{ paper.title }}{% endif %}</p>
     <p class="pub-authors">{{ paper.authors_html }}</p>
-    <p class="pub-meta"><strong>{{ paper.venue_full }}</strong>{% if paper.venue_extra %} &middot; {{ paper.venue_extra }}{% endif %} <span class="show_paper_citations" data-title="{{ paper.title | escape }}"{% if paper.citation_titles %} data-title-alt="{{ paper.citation_titles | join: '|' | escape }}"{% endif %}></span>{% if paper.links %} {{ paper.links }}{% endif %}</p>
+    <p class="pub-meta"><strong>{{ paper.venue_full }}</strong>{% if paper.venue_extra %} &middot; {{ paper.venue_extra }}{% endif %}{% if paper.role %} &middot; <em>{{ paper.role }}</em>{% endif %} <span class="show_paper_citations" data-title="{{ paper.title | escape }}"{% if paper.citation_titles %} data-title-alt="{{ paper.citation_titles | join: '|' | escape }}"{% endif %}></span>{% if paper.links %} {{ paper.links }}{% endif %}</p>
     <p class="pub-note">{{ paper.note }}</p>
   </div>
 </div>
 
-{%- endif -%}
 {%- endfor -%}
 
+{%- endif -%}
 {%- endfor -%}

@@ -126,7 +126,7 @@ def main() -> int:
         return 2
 
     papers = (ROOT / "_data" / "publications.yml").read_text(encoding="utf-8")
-    blocks = re.split(r"^\s*-\s+group:", papers, flags=re.MULTILINE)[1:]
+    blocks = re.split(r"^\s*-\s+topic:", papers, flags=re.MULTILINE)[1:]
 
     titles: list[str] = []
     alt_titles: list[str] = []
